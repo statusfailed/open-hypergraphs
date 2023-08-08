@@ -1,0 +1,33 @@
+[project]
+name = "open-hypergraphs"
+version = "0.0.1.0"
+authors = [
+  { name="Paul Wilson", email="paul@statusfailed.com" }
+]
+description = "open hypergraphs"
+readme = "README.md"
+requires-python = ">= 3.7"
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+]
+dependencies = [
+  "numpy~=1.23.3",
+  "scipy~=1.10.0",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/statusfailed/open-hypergraphs/"
+"Github" = "https://github.com/statusfailed/open-hypergraphs/"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build]
+packages = ["open_hypergraphs"]
+
+[tool.pytest.ini_options]
+testpaths = [
+  "tests"
+]
