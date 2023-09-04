@@ -154,6 +154,13 @@ class AbstractFiniteFunction:
         """Compute the initial map ``? : 0 → b``"""
         return cls(b, cls._Array.zeros(0, dtype=dtype))
 
+    def to_initial(self) -> 'AbstractFiniteFunction':
+        """ Turn a finite function ``f : A → B`` into the initial map ``? : 0 → B``.
+
+        >>> f.to_initial() == FiniteFunction.initial(f.target) >> f
+        """
+        return cls(self).initial(self.b, dtype=self.table.dtype)
+
     @classmethod
     def inj0(cls, a, b):
         """Compute the injection ``ι₀ : a → a + b``"""
