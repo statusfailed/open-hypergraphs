@@ -74,3 +74,33 @@ class FiniteFunctionSpec:
     @given(f=FinFun.arrows(), a=FinFun.objects())
     def test_f_cp_inj1_equals_inject1(self, f, a):
         assert f >> FinFun.Fun.inj1(a, f.target) == f.inject1(a)
+
+    ############################################################################
+    # Strict symmetric monoidal properties
+
+    @given(f=FinFun.arrows(), g=FinFun.arrows())
+    def test_tensor_vs_injections(self, f, g):
+        """ Verify that the tensor product of arrows corresponds to its
+        definition in terms of coproducts and injections """
+        i0 = FinFun.Fun.inj0(f.target, g.target)
+        i1 = FinFun.Fun.inj1(f.target, g.target)
+
+        assert f @ g == (f >> i0) + (g >> i1)
+
+    @given(a=FinFun.objects(), b=FinFun.objects())
+    def test_twist_inverse(self, a, b):
+        """ Verify that σ ; σ = id """
+        f = FinFun.Fun.twist(a, b)
+        g = FinFun.Fun.twist(b, a)
+
+        identity = FinFun.Fun.identity(a+b)
+        assert f >> g == identity
+        assert g >> f == identity
+
+    @given(f=FinFun.arrows(), g=FinFun.arrows())
+    def test_twist_naturality(self, f, g):
+        """ Check naturality of σ, so that (f @ g) ; σ = σ ; (f @ g) """
+        post_twist = FinFun.Fun.twist(f.target, g.target)
+        pre_twist = FinFun.Fun.twist(f.source, g.source)
+
+        assert ((f @ g) >> post_twist) == (pre_twist >> (g @ f))
