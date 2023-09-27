@@ -1,5 +1,10 @@
 import hypothesis.strategies as st
 
+# A dummy value to indicate that a value should be generated.
+# It's used in arrow_type to disambiguate from the "None" target.
+class Random:
+    pass
+
 def _is_valid_arrow_type(A, B):
     if B == 0:
         return A == 0
@@ -32,19 +37,19 @@ class FiniteFunctionStrategies:
 
     @classmethod
     @st.composite
-    def arrow_type(draw, cls, source=None, target=None):
+    def arrow_type(draw, cls, source=Random, target=Random, finite_target=True):
         """ Generate the type of a random finite function.
         Only one type is forbidden: ``N → 0`` for ``N > 0``.
         """
         # User specified both target and source
-        if target is not None and source is not None:
+        if target is not Random and source is not Random:
             if target == 0 and source != 0:
                 raise ValueError("No arrows exist of type n → 0 for n != 0.")
             return source, target
 
-        elif source is None:
+        elif source is Random:
             # any target
-            target = draw(cls.objects()) if target is None else target
+            target = draw(cls.objects()) if target is Random else target
 
             if target == 0:
                 source = 0
@@ -55,6 +60,8 @@ class FiniteFunctionStrategies:
 
         # target can only be initial if source is also initial.
         target = draw(cls.objects(allow_initial=(source==0)))
+        if finite_target == False and draw(st.booleans()):
+            target = None
 
         assert _is_valid_arrow_type(source, target)
         return source, target
@@ -62,23 +69,34 @@ class FiniteFunctionStrategies:
 
     @classmethod
     @st.composite
-    def arrows(draw, cls, source=None, target=None):
-        source, target = draw(cls.arrow_type(source=source, target=target))
+    def arrows(draw, cls, source=Random, target=Random, finite_target=False):
+        if source is None:
+            raise ValueError("Cannot generate an arrow with source = None")
+
+        source, target = draw(cls.arrow_type(
+            source=source,
+            target=target,
+            finite_target=finite_target))
+
         if target == 0:
             table = cls.Array.zeros(0, dtype=int)
         else:
-            table = draw(cls.arrays(n=source, high=target))
+            # NOTE: set high to MAX_OBJECT if non-finite.
+            high = cls.MAX_OBJECT if target is None else target
+            table = draw(cls.arrays(n=source, high=high))
         return cls.Fun(target, table)
 
     @classmethod
     @st.composite
-    def parallel_arrows(draw, cls, source=None, target=None, n=2):
+    def parallel_arrows(draw, cls, source=Random, target=Random, n=2, finite_target=False):
         source, target = draw(cls.arrow_type(source=source, target=target))
-        return [ draw(cls.arrows(source=source, target=target)) for _ in range(0, n) ]
+        return [
+            draw(cls.arrows(source=source, target=target, finite_target=finite_target))
+            for _ in range(0, n) ]
 
     @classmethod
     @st.composite
-    def composite_arrows(draw, cls, source=None, target=None, n=2):
+    def composite_arrows(draw, cls, source=Random, target=Random, n=2, finite_target=False):
         """
         ``composite(A, B, n=k)`` draws a list of ``k`` arrows which can be composed in sequence.
         For example, when k = 3, we might have the following arrows:
@@ -98,14 +116,16 @@ class FiniteFunctionStrategies:
         if target == 0:
             return [ draw(cls.arrows(0, 0)) for _ in range(0, n) ]
 
-        T = target if n == 1 else None
+        T = target if n == 1 else Random
         arrows.append(draw(cls.arrows(source, T)))
 
         for i in range(0, n-1):
             S = arrows[i].target
-            T = None if i < n - 1 else target
-            arrows.append(draw(cls.arrows(source=S, target=T)))
-
+            T = Random if i < n - 2 else target
+            arrows.append(draw(cls.arrows(
+                source=S,
+                target=T,
+                finite_target=finite_target if i == n - 2 else True)))
 
         return arrows
 
@@ -120,12 +140,11 @@ class FiniteFunctionStrategies:
 
     @classmethod
     @st.composite
-    def indexed_coproducts(draw, cls, n, target=None):
+    def indexed_coproducts(draw, cls, n, target=Random):
         if n is None:
             n = draw(cls.coproduct_indexes)
 
-        sources = draw(cls.arrows(source=n, target=cls.MAX_OBJECT))
-        sources = cls.Fun(None, sources.table) # need to set None target for IndexedCoproduct
+        sources = draw(cls.arrows(source=n, target=None))
         source = cls.Fun._Array.sum(sources.table)
 
         _, target = draw(cls.arrow_type(source=source, target=target))

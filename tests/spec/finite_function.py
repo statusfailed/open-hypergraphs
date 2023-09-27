@@ -41,8 +41,6 @@ class FiniteFunctionSpec:
         """ ``f ; id = f`` """
         f >> FinFun.Fun.identity(f.target) == f
 
-    # from hypothesis import settings, reproduce_failure
-    # @settings(print_blob=True)
     @given(FinFun.composite_arrows(n=3))
     def test_category_composition_associative(self, fgh):
         """ ``(f ; g) ; h = f ; (g ; h)`` """
@@ -104,3 +102,24 @@ class FiniteFunctionSpec:
         pre_twist = FinFun.Fun.twist(f.source, g.source)
 
         assert ((f @ g) >> post_twist) == (pre_twist >> (g @ f))
+
+    ############################################################################
+    # Coequalizers
+
+    @given(fg=FinFun.parallel_arrows(n=2))
+    def test_coequalizer_commutes(self, fg):
+        f, g = fg
+        c = f.coequalizer(g)
+        assert (f >> c) == (g >> c)
+
+    ############################################################################
+    # Finite (indexed) coproducts
+
+    @given(s=FinFun.arrows())
+    def test_injection_coproduct_identity(self, s: AbstractFiniteFunction):
+        """ Test that the (finite) coproduct of injections is the identity
+            ι_0 + ι_1 + ... + ι_N = identity(sum_{i ∈ N} s(i))
+        """
+        i = FinFun.Fun.identity(s.source)
+        n = FinFun.Fun._Array.sum(s.table)
+        assert s.injections(i) == FinFun.Fun.identity(n)
