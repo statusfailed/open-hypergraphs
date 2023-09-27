@@ -16,3 +16,7 @@ class Hypergraph(AbstractHypergraph):
 class OpenHypergraph(AbstractOpenHypergraph):
     _Fun        = FiniteFunction
     _Hypergraph = Hypergraph
+
+FiniteFunction._IndexedCoproduct = IndexedCoproduct
+FiniteFunction._Hypergraph = Hypergraph
+FiniteFunction._OpenHypergraph = OpenHypergraph

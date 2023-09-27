@@ -34,6 +34,9 @@ def arange(*args, **kwargs):
 def all(*args, **kwargs):
     return np.all(*args, **kwargs)
 
+def any(*args, **kwargs):
+    return np.any(*args, **kwargs)
+
 def zeros(*args, **kwargs):
     kwargs.setdefault('dtype', DEFAULT_DTYPE)
     return np.zeros(*args, **kwargs)

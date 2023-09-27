@@ -2,6 +2,8 @@ from hypothesis import given
 
 from tests.strategy.finite_function import FiniteFunctionStrategies as FinFun
 
+from open_hypergraphs.finite_function import AbstractFiniteFunction, AbstractIndexedCoproduct
+
 class FiniteFunctionSpec:
 
     @given(FinFun.arrows())
@@ -13,7 +15,7 @@ class FiniteFunctionSpec:
     def test_inequality(self, fg):
         f, g = fg
 
-        if FinFun.np.any(f.table != g.table):
+        if FinFun.Array.any(f.table != g.table):
             assert f != g
         elif (f.table.dtype != g.table.dtype):
             assert f != g
@@ -49,4 +51,26 @@ class FiniteFunctionSpec:
 
     ############################################################################
     # Coproducts
-    # TODO!
+
+    # Uniqueness of the initial map
+    # any map f : 0 → B is equal to the initial map ? : 0 → B
+    @given(FinFun.arrows(source=0))
+    def test_initial_map_unique(self, f):
+        assert f == FinFun.Fun.initial(f.target)
+
+    @given(FinFun.indexed_coproducts(n=2))
+    def test_coproduct_diagram_commutes(self, c: AbstractIndexedCoproduct):
+        f, g = c # note: this uses the IndexedCoproduct's __iter__ to unpack
+        i0 = FinFun.Fun.inj0(f.source, g.source)
+        i1 = FinFun.Fun.inj1(f.source, g.source)
+
+        assert (i0 >> (f + g)) == f
+        assert (i1 >> (f + g)) == g
+
+    @given(f=FinFun.arrows(), b=FinFun.objects())
+    def test_f_cp_inj0_equals_inject0(self, f, b):
+        assert f >> FinFun.Fun.inj0(f.target, b) == f.inject0(b)
+
+    @given(f=FinFun.arrows(), a=FinFun.objects())
+    def test_f_cp_inj1_equals_inject1(self, f, a):
+        assert f >> FinFun.Fun.inj1(a, f.target) == f.inject1(a)

@@ -9,11 +9,20 @@ class FiniteFunctionStrategies:
     """ Hypothesis strategies for generating finite functions.
     Parametrised by the array module (np), Array backend, and Finite Function class.
     """
-    np = None
+
+    # Generators for numpy-compatible arrays
+    arrays = None
+
+    # open-hypergraphs Array backend and FiniteFunction implementation(?)
     Array = None
     Fun = None
 
+    # Largest object to test with
     MAX_OBJECT = 32
+
+    # Largest indexed of a coproduct (i.e., number of elements n in a
+    # coproduct X_1 + X_2 ... X_n)
+    MAX_COPRODUCT = 32
 
     @classmethod
     @st.composite
@@ -56,9 +65,9 @@ class FiniteFunctionStrategies:
     def arrows(draw, cls, source=None, target=None):
         source, target = draw(cls.arrow_type(source=source, target=target))
         if target == 0:
-            table = cls.np.zeros(0, dtype=int)
+            table = cls.Array.zeros(0, dtype=int)
         else:
-            table = cls.np.random.randint(0, high=target, size=source)
+            table = draw(cls.arrays(n=source, high=target))
         return cls.Fun(target, table)
 
     @classmethod
@@ -99,3 +108,29 @@ class FiniteFunctionStrategies:
 
 
         return arrows
+
+    ######################################################################
+    # Coproducts
+
+    @classmethod
+    @st.composite
+    def coproduct_indexes(draw, cls):
+        min_value = 0
+        return draw(s.integers(min_value=min_value, max_value=cls.MAX_COPRODUCT))
+
+    @classmethod
+    @st.composite
+    def indexed_coproducts(draw, cls, n, target=None):
+        if n is None:
+            n = draw(cls.coproduct_indexes)
+
+        sources = draw(cls.arrows(source=n, target=cls.MAX_OBJECT))
+        sources = cls.Fun(None, sources.table) # need to set None target for IndexedCoproduct
+        source = cls.Fun._Array.sum(sources.table)
+
+        _, target = draw(cls.arrow_type(source=source, target=target))
+        values = draw(cls.arrows(
+            source=cls.Fun._Array.sum(sources.table),
+            target=target))
+
+        return cls.Fun._IndexedCoproduct(sources=sources, values=values)
