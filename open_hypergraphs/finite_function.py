@@ -159,7 +159,7 @@ class AbstractFiniteFunction:
 
         >>> f.to_initial() == FiniteFunction.initial(f.target) >> f
         """
-        return cls(self).initial(self.b, dtype=self.table.dtype)
+        return type(self).initial(self.target, dtype=self.table.dtype)
 
     @classmethod
     def inj0(cls, a, b):

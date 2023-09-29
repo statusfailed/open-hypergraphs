@@ -56,6 +56,10 @@ class FiniteFunctionSpec:
     def test_initial_map_unique(self, f):
         assert f == FinFun.Fun.initial(f.target)
 
+    @given(FinFun.arrows())
+    def test_to_initial(self, f):
+        assert f.to_initial() == FinFun.Fun.initial(f.target)
+
     @given(FinFun.indexed_coproducts(n=2))
     def test_coproduct_diagram_commutes(self, c: AbstractIndexedCoproduct):
         f, g = c # note: this uses the IndexedCoproduct's __iter__ to unpack
