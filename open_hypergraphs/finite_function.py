@@ -466,35 +466,3 @@ class AbstractIndexedCoproduct:
         """Like ``map`` but only computes the ``values`` array of an AbstractIndexedCoproduct"""
         assert x.target == len(self.sources)
         return self.sources.injections(x) >> self.values
-
-
-def argsort(f: AbstractFiniteFunction):
-    """ Applies a stable 'argsort' to the underlying array of a finite function.
-    When that finite function is a permutation, this inverts it.
-    """
-    return type(f)(f.source, f._Array.argsort(f.table))
-
-def bincount(f: AbstractFiniteFunction):
-    """ bincount the underlying array of a finite function
-
-    Args:
-        f: A finite function of type ``A → B``
-
-    Returns:
-        AbstractFiniteFunction: A finite function of type ``B → A+1``
-
-    """
-    # the bincount of an array
-    #   f : A → B
-    # is a finite function
-    #   g : B → A+1
-    # where
-    #   g(b) = |{b . ∃a. f(a) = b}|
-    return type(f)(len(f)+1, f._Array.bincount(f.table, minlength=f.target))
-
-def cumsum(f: AbstractFiniteFunction) -> AbstractFiniteFunction:
-    Fun = type(f)
-    Array = Fun._Array
-    table = Array.zeros(len(f) + 1, dtype=f.table.dtype)
-    table[1:] = Array.cumsum(f.table)
-    return Fun(table[-1]+1, table[:-1])

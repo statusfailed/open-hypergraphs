@@ -123,3 +123,28 @@ class FiniteFunctionSpec:
         i = FinFun.Fun.identity(s.source)
         n = FinFun.Fun._Array.sum(s.table)
         assert s.injections(i) == FinFun.Fun.identity(n)
+
+    @given(FinFun.indexed_coproducts())
+    def test_indexed_coproduct_roundtrip(self, c):
+        d = type(c).from_list(c.target, list(c))
+        # Test that IndexedCoproduct roundtrips via a list of functions
+        assert c == d
+        # Also test that a list of functions roundtrips through IndexedCoproduct
+        assert list(d) == list(c)
+
+    @given(FinFun.map_with_indexed_coproducts())
+    def test_indexed_coproduct_map(self, fsx):
+        # Test that we can pre-compose an arrow with the indexing function
+        c, x = fsx
+        target = c.values.target
+        fs = list(c)
+
+        expected_sources = FinFun.Fun(None, [len(fs[x(i)]) for i in range(0, x.source)] )
+        expected_values   = FinFun.Fun.coproduct_list([ fs[x(i)] for i in range(0, x.source) ], target=target)
+
+        assert len(c) == len(fs)
+
+        d = c.map(x)
+        assert len(d) == len(x)
+        assert d.sources == expected_sources
+        assert d.values == expected_values

@@ -136,13 +136,13 @@ class FiniteFunctionStrategies:
     @st.composite
     def coproduct_indexes(draw, cls):
         min_value = 0
-        return draw(s.integers(min_value=min_value, max_value=cls.MAX_COPRODUCT))
+        return draw(st.integers(min_value=min_value, max_value=cls.MAX_COPRODUCT))
 
     @classmethod
     @st.composite
-    def indexed_coproducts(draw, cls, n, target=Random):
-        if n is None:
-            n = draw(cls.coproduct_indexes)
+    def indexed_coproducts(draw, cls, n=Random, target=Random):
+        if n is Random:
+            n = draw(cls.coproduct_indexes())
 
         sources = draw(cls.arrows(source=n, target=None))
         source = cls.Fun._Array.sum(sources.table)
@@ -153,3 +153,14 @@ class FiniteFunctionStrategies:
             target=target))
 
         return cls.Fun._IndexedCoproduct(sources=sources, values=values)
+
+    @classmethod
+    @st.composite
+    def map_with_indexed_coproducts(draw, cls, n=Random, target=Random):
+        # c : Σ_{i ∈ N} f_i → s(f_i) → T
+        c = draw(cls.indexed_coproducts(n=n, target=target))
+        N = len(c)
+        # x : X → N
+        x = draw(cls.arrows(target=N))
+
+        return c, x
