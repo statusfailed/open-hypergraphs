@@ -44,14 +44,14 @@ DTYPE='int64'
 class AbstractFiniteFunction:
     """
     Finite functions parametrised over the underlying array type (the "backend").
-    This implementation assumes there is a cls._Array member implementing various primitives.
-    For example, cls._Array.sum() should compute the sum of an array.
+    This implementation assumes there is a cls.Array member implementing various primitives.
+    For example, cls.Array.sum() should compute the sum of an array.
     """
     def __init__(self, target, table, dtype=DTYPE):
         # TODO: this constructor is too complicated; it should be simplified.
-        # _Array is the "array functions module"
+        # Array is the "array functions module"
         # It lets us parametrise AbstractFiniteFunction by a module like "numpy".
-        Array = type(self)._Array
+        Array = type(self).Array
         if type(table) == Array.Type:
            self.table = table
         else:
@@ -109,7 +109,7 @@ class AbstractFiniteFunction:
             AbstractFiniteFunction: Identity map at n
         """
         assert n >= 0
-        return cls(n, cls._Array.arange(0, n, dtype=DTYPE))
+        return cls(n, cls.Array.arange(0, n, dtype=DTYPE))
 
     # Compute (f ; g), i.e., the function x → g(f(x))
     def compose(f: 'AbstractFiniteFunction', g: 'AbstractFiniteFunction'):
@@ -130,7 +130,7 @@ class AbstractFiniteFunction:
         source = f.source
         target = g.target
         # Use array indexing to compute composition in parallel (if applicable
-        # cls._Array backend is used)
+        # cls.Array backend is used)
         table = g.table[f.table]
 
         return type(f)(target, table)
@@ -145,14 +145,14 @@ class AbstractFiniteFunction:
     def __eq__(f, g):
         return f.source == g.source \
            and f.target == g.target \
-           and f._Array.all(f.table == g.table)
+           and f.Array.all(f.table == g.table)
 
     ################################################################################
     # FiniteFunction has initial objects and coproducts
     @classmethod
     def initial(cls, b, dtype=DTYPE):
         """Compute the initial map ``? : 0 → b``"""
-        return cls(b, cls._Array.zeros(0, dtype=dtype))
+        return cls(b, cls.Array.zeros(0, dtype=dtype))
 
     def to_initial(self) -> 'AbstractFiniteFunction':
         """ Turn a finite function ``f : A → B`` into the initial map ``? : 0 → B``.
@@ -164,13 +164,13 @@ class AbstractFiniteFunction:
     @classmethod
     def inj0(cls, a, b):
         """Compute the injection ``ι₀ : a → a + b``"""
-        table = cls._Array.arange(0, a, dtype=DTYPE)
+        table = cls.Array.arange(0, a, dtype=DTYPE)
         return cls(a + b, table)
 
     @classmethod
     def inj1(cls, a, b):
         """Compute the injection ``ι₁ : b → a + b``"""
-        table = cls._Array.arange(a, a + b, dtype=DTYPE)
+        table = cls.Array.arange(a, a + b, dtype=DTYPE)
         return cls(a + b, table)
 
     def inject0(f, b):
@@ -195,7 +195,7 @@ class AbstractFiniteFunction:
         assert f.target == g.target
         assert f.table.dtype == g.table.dtype
         target = f.target
-        table = type(f)._Array.concatenate([f.table, g.table])
+        table = type(f).Array.concatenate([f.table, g.table])
         return type(f)(target, table)
 
     def __add__(f, g):
@@ -218,7 +218,7 @@ class AbstractFiniteFunction:
         # The tensor (f @ g) is the same as (f;ι₀) + (g;ι₁)
         # however, we compute it directly for the sake of efficiency
         T = type(f)
-        table = T._Array.concatenate([f.table, g.table + f.target])
+        table = T.Array.concatenate([f.table, g.table + f.target])
         return T(f.target + g.target, table)
 
     def __matmul__(f, g):
@@ -230,7 +230,7 @@ class AbstractFiniteFunction:
         # e.g., twist_{2, 3} = [3 4 0 1 2]
         #       twist_{2, 1} = [1 2 0]
         #       twist_{0, 2} = [0 1]
-        table = cls._Array.concatenate([b + cls._Array.arange(0, a), cls._Array.arange(0, b)])
+        table = cls.Array.concatenate([b + cls.Array.arange(0, a), cls.Array.arange(0, b)])
         return cls(a + b, table)
 
     ################################################################################
@@ -258,7 +258,7 @@ class AbstractFiniteFunction:
         # have to take a max() of each table.
         # Q: number of connected components
         T = type(f)
-        Q, q = T._Array.connected_components(f.table, g.table, f.target)
+        Q, q = T.Array.connected_components(f.table, g.table, f.target)
         return T(Q, q)
 
     ################################################################################
@@ -266,14 +266,14 @@ class AbstractFiniteFunction:
     @classmethod
     def terminal(cls, a, dtype=DTYPE):
         """ Compute the terminal map ``! : a → 1``. """
-        return cls(1, cls._Array.zeros(a, dtype=DTYPE))
+        return cls(1, cls.Array.zeros(a, dtype=DTYPE))
 
     # TODO: rename this "element"?
     @classmethod
     def singleton(cls, x, b, dtype=DTYPE):
         """ return the singleton array ``[x]`` whose domain is ``b``. """
         assert x < b
-        return cls(b, cls._Array.full(1, x, dtype=dtype))
+        return cls(b, cls.Array.full(1, x, dtype=dtype))
 
     ################################################################################
     # Sorting morphisms
@@ -283,7 +283,7 @@ class AbstractFiniteFunction:
         Return the *stable* sorting permutation     ``p : A → A``
         such that                                   ``p >> f``  is monotonic.
         """
-        return type(f)(f.source, f._Array.argsort(f.table))
+        return type(f)(f.source, f.Array.argsort(f.table))
 
     ################################################################################
     # Useful permutations
@@ -292,8 +292,8 @@ class AbstractFiniteFunction:
     #   interleave : (A₀ ● A₁ ● ... ● An) ● (B₀ ● B₁ ● ... ● Bn) → (A₀ ● B₀) ● .. ● (An ● Bn)
     @classmethod
     def interleave(cls, N: int):
-        table = cls._Array.zeros(2*N, dtype=int)
-        table[0:N] = cls._Array.arange(N)*2
+        table = cls.Array.zeros(2*N, dtype=int)
+        table[0:N] = cls.Array.arange(N)*2
         table[N:] = table[0:N] + 1
         return cls(2*N, table)
 
@@ -301,8 +301,8 @@ class AbstractFiniteFunction:
     #   cointerleave : (A₀ ● B₀) ● .. ● (An ● Bn) → (A₀ ● A₁ ● ... ● An) ● (B₀ ● B₁ ● ... ● Bn)
     @classmethod
     def cointerleave(cls, N):
-        table = cls._Array.zeros(2*N, dtype=int)
-        table[0::2] = cls._Array.arange(N)
+        table = cls.Array.zeros(2*N, dtype=int)
+        table[0::2] = cls.Array.arange(N)
         table[1::2] = table[0::2] + N
         return cls(2*N, table)
 
@@ -323,7 +323,7 @@ class AbstractFiniteFunction:
 
         # all targets must be equal
         assert all(f.target == g.target for f, g in zip(fs, fs[:1]))
-        return cls(fs[0].target, cls._Array.concatenate([f.table for f in fs]))
+        return cls(fs[0].target, cls.Array.concatenate([f.table for f in fs]))
 
     @classmethod
     def tensor_list(cls, fs: List['AbstractFiniteFunction']):
@@ -335,10 +335,10 @@ class AbstractFiniteFunction:
         if len(fs) == 0:
             return cls.initial(0)
 
-        targets = cls._Array.array([f.target for f in fs])
-        offsets = cls._Array.zeros(len(targets) + 1, dtype=type(fs[0].source))
-        offsets[1:] = cls._Array.cumsum(targets) # exclusive scan
-        table = cls._Array.concatenate([f.table + offset for f, offset in zip(fs, offsets[:-1])])
+        targets = cls.Array.array([f.target for f in fs])
+        offsets = cls.Array.zeros(len(targets) + 1, dtype=type(fs[0].source))
+        offsets[1:] = cls.Array.cumsum(targets) # exclusive scan
+        table = cls.Array.concatenate([f.table + offset for f, offset in zip(fs, offsets[:-1])])
         return cls(offsets[-1], table)
 
 
@@ -367,7 +367,7 @@ class AbstractFiniteFunction:
         sizes equal to s.
         """
         # segment pointers
-        Array = a._Array
+        Array = a.Array
 
         # cumsum is inclusive, we need exclusive so we just allocate 1 more space.
         p = Array.zeros(s.source + 1, dtype=Array.DEFAULT_DTYPE)
@@ -377,7 +377,7 @@ class AbstractFiniteFunction:
         r = Array.segmented_arange(k.table)
         # NOTE: p[-1] is sum(s).
         cls = type(s)
-        return cls(p[-1], r + cls._Array.repeat(p[a.table], k.table))
+        return cls(p[-1], r + cls.Array.repeat(p[a.table], k.table))
 
 @dataclass
 class AbstractIndexedCoproduct:
@@ -401,18 +401,18 @@ class AbstractIndexedCoproduct:
     def __post_init__(self):
         # TODO FIXME: make this type derivable from AbstractFiniteFunction so we
         # don't need to have one version for each backend?
-        self._Fun = type(self.sources)
-        self._Array = self._Fun._Array
+        self.Fun = type(self.sources)
+        self.Array = self.Fun.Array
 
         # we always ignore the target of sources; this ensures
         # roundtrippability.
         assert self.sources.target is None
-        assert type(self.values) == self._Fun
-        assert len(self.values) == self._Array.sum(self.sources.table)
+        assert type(self.values) == self.Fun
+        assert len(self.values) == self.Array.sum(self.sources.table)
 
     @classmethod
     def initial(cls, target, dtype=DTYPE):
-        return cls(cls._Fun.initial(None, dtype=dtype), cls._Fun.initial(target, dtype))
+        return cls(cls.Fun.initial(None, dtype=dtype), cls.Fun.initial(target, dtype))
 
     @property
     def target(self):
@@ -427,8 +427,8 @@ class AbstractIndexedCoproduct:
         """ Create an `AbstractIndexedCoproduct` from a list of :py:class:`AbstractFiniteFunction` """
         assert all(target == f.target for f in fs)
         return cls(
-            sources=cls._Fun(None, [len(f) for f in fs], dtype=int),
-            values=cls._Fun.coproduct_list(fs, target=target))
+            sources=cls.Fun(None, [len(f) for f in fs], dtype=int),
+            values=cls.Fun.coproduct_list(fs, target=target))
 
     def __iter__(self):
         """ Yield an iterator of the constituent finite functions
@@ -439,11 +439,11 @@ class AbstractIndexedCoproduct:
         N     = len(self.sources)
 
         # Compute source pointers
-        s_ptr = self._Array.zeros(N+1, dtype=self.sources.table.dtype)
-        s_ptr[1:] = self._Array.cumsum(self.sources.table)
+        s_ptr = self.Array.zeros(N+1, dtype=self.sources.table.dtype)
+        s_ptr[1:] = self.Array.cumsum(self.sources.table)
 
         for i in range(0, N):
-            yield self._Fun(self.target, self.values.table[s_ptr[i]:s_ptr[i+1]])
+            yield self.Fun(self.target, self.values.table[s_ptr[i]:s_ptr[i+1]])
 
     def map(self, x: AbstractFiniteFunction):
         """ Given an :py:class:`AbstractIndexedCoproduct` of finite functions::

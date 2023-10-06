@@ -125,7 +125,7 @@ class FiniteFunctionSpec:
             ι_0 + ι_1 + ... + ι_N = identity(sum_{i ∈ N} s(i))
         """
         i = FinFun.Fun.identity(s.source)
-        n = FinFun.Fun._Array.sum(s.table)
+        n = FinFun.Fun.Array.sum(s.table)
         assert s.injections(i) == FinFun.Fun.identity(n)
 
     @given(FinFun.indexed_coproducts())

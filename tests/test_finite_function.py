@@ -31,4 +31,4 @@ class TestFiniteFunction(unittest.TestCase, FiniteFunctionSpec):
         # Fun is the FiniteFunction implementation
         FiniteFunctionStrategies.Fun = FiniteFunction
         # Array is the array backend
-        FiniteFunctionStrategies.Array = FiniteFunction._Array
+        FiniteFunctionStrategies.Array = FiniteFunction.Array

@@ -145,14 +145,14 @@ class FiniteFunctionStrategies:
             n = draw(cls.coproduct_indexes())
 
         sources = draw(cls.arrows(source=n, target=None))
-        source = cls.Fun._Array.sum(sources.table)
+        source = cls.Fun.Array.sum(sources.table)
 
         _, target = draw(cls.arrow_type(source=source, target=target))
         values = draw(cls.arrows(
-            source=cls.Fun._Array.sum(sources.table),
+            source=cls.Fun.Array.sum(sources.table),
             target=target))
 
-        return cls.Fun._IndexedCoproduct(sources=sources, values=values)
+        return cls.Fun.IndexedCoproduct(sources=sources, values=values)
 
     @classmethod
     @st.composite

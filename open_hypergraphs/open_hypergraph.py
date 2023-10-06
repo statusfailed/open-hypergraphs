@@ -3,10 +3,11 @@ from open_hypergraphs.finite_function import *
 from open_hypergraphs.hypergraph import *
 
 @dataclass
-class AbstractOpenHypergraph:
+class OpenHypergraph:
+    """ An OpenHypergraph is a ... """
     s: AbstractFiniteFunction
     t: AbstractFiniteFunction
-    H: AbstractHypergraph
+    H: Hypergraph
 
     def type(self):
         return (
