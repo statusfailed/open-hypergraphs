@@ -38,12 +38,14 @@ FiniteFunction(6, [0 1 2 3 4 5 5 5 5 5])
 
 from dataclasses import dataclass
 from abc import abstractmethod, ABC
-from typing import List, Type
+from typing import List, Type, Union
 from typing_extensions import Protocol
 
 from open_hypergraphs.array.backend import ArrayBackend, ArrayType
 
 DTYPE='int64'
+
+Target = Union[None, int]
 
 class FiniteFunction(ABC):
     """
@@ -52,6 +54,7 @@ class FiniteFunction(ABC):
     For example, cls.Array.sum() should compute the sum of an array.
     """
     Array: Type[ArrayBackend]
+    target: Target
 
     def __init__(self, target, table, dtype=DTYPE):
         # TODO: this constructor is too complicated; it should be simplified.
@@ -71,8 +74,11 @@ class FiniteFunction(ABC):
             assert self.target >= 0
             assert self.target > Array.max(table)
 
+    def _nonfinite_target(self):
+        return ValueError("FiniteFunction must have finite domain, but had target = {self.target}")
+
     @property
-    def source(self):
+    def source(self) -> int:
         """The source (aka "domain") of this finite function"""
         return len(self.table)
 
@@ -88,7 +94,7 @@ class FiniteFunction(ABC):
     def __repr__(self):
         return f'FiniteFunction({repr(self.target)}, {repr(self.table)})'
 
-    def __call__(self, i: int):
+    def __call__(self, i: int) -> int:
         if i >= self.source:
             raise ValueError("Calling {self} with {i} >= source {self.source}")
         return self.table[i]
@@ -106,7 +112,7 @@ class FiniteFunction(ABC):
     # FiniteFunction forms a category
 
     @classmethod
-    def identity(cls, n: int):
+    def identity(cls, n: int) -> 'FiniteFunction':
         """Return the identity finite function of type n → n.
         Args:
             n(int): The object of which to return the identity map
@@ -118,7 +124,7 @@ class FiniteFunction(ABC):
         return cls(n, cls.Array.arange(0, n, dtype=DTYPE))
 
     # Compute (f ; g), i.e., the function x → g(f(x))
-    def compose(f: 'FiniteFunction', g: 'FiniteFunction'):
+    def compose(f: 'FiniteFunction', g: 'FiniteFunction') -> 'FiniteFunction':
         """Compose this finite function with another
 
         Args:
@@ -141,7 +147,7 @@ class FiniteFunction(ABC):
 
         return type(f)(target, table)
 
-    def __rshift__(f, g):
+    def __rshift__(f: 'FiniteFunction', g: 'FiniteFunction') -> 'FiniteFunction':
         return f.compose(g)
 
     # We can compare functions for equality in a reasonable way: by just
@@ -156,7 +162,7 @@ class FiniteFunction(ABC):
     ################################################################################
     # FiniteFunction has initial objects and coproducts
     @classmethod
-    def initial(cls, b, dtype=DTYPE):
+    def initial(cls, b: Target, dtype=DTYPE) -> 'FiniteFunction':
         """Compute the initial map ``? : 0 → b``"""
         return cls(b, cls.Array.zeros(0, dtype=dtype))
 
@@ -168,34 +174,38 @@ class FiniteFunction(ABC):
         return type(self).initial(self.target, dtype=self.table.dtype)
 
     @classmethod
-    def inj0(cls, a, b):
+    def inj0(cls, a: int, b: int) -> 'FiniteFunction':
         """Compute the injection ``ι₀ : a → a + b``"""
         table = cls.Array.arange(0, a, dtype=DTYPE)
         return cls(a + b, table)
 
     @classmethod
-    def inj1(cls, a, b):
+    def inj1(cls, a: int, b: int) -> 'FiniteFunction':
         """Compute the injection ``ι₁ : b → a + b``"""
         table = cls.Array.arange(a, a + b, dtype=DTYPE)
         return cls(a + b, table)
 
-    def inject0(f, b):
+    def inject0(f: 'FiniteFunction', b: int) -> 'FiniteFunction':
         """
         Directly compute (f ; ι₀) instead of by composition.
 
         >>> f.inject0(b) == f >> ι₀
         """
+        if f.target is None:
+            raise f._nonfinite_target()
         return type(f)(f.target + b, f.table)
 
-    def inject1(f, a):
+    def inject1(f: 'FiniteFunction', a: int) -> 'FiniteFunction':
         """
         Directly compute (f ; ι₁) instead of by composition.
 
         >>> f.inject1(a) == f >> ι₁
         """
+        if f.target is None:
+            raise f._nonfinite_target()
         return type(f)(a + f.target, a + f.table)
 
-    def coproduct(f, g):
+    def coproduct(f: 'FiniteFunction', g: 'FiniteFunction') -> 'FiniteFunction':
         """ Given maps ``f : A₀ → B`` and ``g : A₁ → B``
         compute the coproduct ``f.coproduct(g) : A₀ + A₁ → B``"""
         assert f.target == g.target
@@ -204,7 +214,7 @@ class FiniteFunction(ABC):
         table = type(f).Array.concatenate([f.table, g.table])
         return type(f)(target, table)
 
-    def __add__(f, g):
+    def __add__(f: 'FiniteFunction', g: 'FiniteFunction') -> 'FiniteFunction':
         """ Inline coproduct """
         return f.coproduct(g)
 
@@ -215,7 +225,7 @@ class FiniteFunction(ABC):
         """ return the unit object of the category """
         return 0
 
-    def tensor(f: 'FiniteFunction', g: 'FiniteFunction'):
+    def tensor(f: 'FiniteFunction', g: 'FiniteFunction') -> 'FiniteFunction':
         """ Given maps
         ``f : A₀ → B₀`` and
         ``g : A₁ → B₁``
@@ -223,11 +233,15 @@ class FiniteFunction(ABC):
         ``f.tensor(g) : A₀ + A₁ → B₀ + B₁``"""
         # The tensor (f @ g) is the same as (f;ι₀) + (g;ι₁)
         # however, we compute it directly for the sake of efficiency
+        if f.target is None:
+            raise f._nonfinite_target()
+        if g.target is None:
+            raise f._nonfinite_target()
         T = type(f)
         table = T.Array.concatenate([f.table, g.table + f.target])
         return T(f.target + g.target, table)
 
-    def __matmul__(f: 'FiniteFunction', g: 'FiniteFunction'):
+    def __matmul__(f: 'FiniteFunction', g: 'FiniteFunction') -> 'FiniteFunction':
         return f.tensor(g)
 
     @classmethod
@@ -242,7 +256,7 @@ class FiniteFunction(ABC):
     ################################################################################
     # Coequalizers for FiniteFunction
 
-    def coequalizer(f, g) -> 'FiniteFunction':
+    def coequalizer(f: 'FiniteFunction', g: 'FiniteFunction') -> 'FiniteFunction':
         """
         Given finite functions    ``f, g : A → B``,
         return the *coequalizer*  ``q    : B → Q``
@@ -264,6 +278,8 @@ class FiniteFunction(ABC):
         # representing the graph can be computed efficiently; otherwise we'd
         # have to take a max() of each table.
         # Q: number of connected components
+        if f.target is None:
+            raise f._nonfinite_target()
         cls = type(f)
         Q, q = cls.Array.connected_components(f.table, g.table, f.target)
         return cls(Q, q)
@@ -271,20 +287,20 @@ class FiniteFunction(ABC):
     ################################################################################
     # FiniteFunction also has cartesian structure which is useful
     @classmethod
-    def terminal(cls, a, dtype=DTYPE):
+    def terminal(cls, a: int, dtype=DTYPE) -> 'FiniteFunction':
         """ Compute the terminal map ``! : a → 1``. """
         return cls(1, cls.Array.zeros(a, dtype=DTYPE))
 
     # TODO: rename this "element"?
     @classmethod
-    def singleton(cls, x, b, dtype=DTYPE):
+    def singleton(cls, x: int, b: int, dtype=DTYPE) -> 'FiniteFunction':
         """ return the singleton array ``[x]`` whose domain is ``b``. """
         assert x < b
         return cls(b, cls.Array.full(1, x, dtype=dtype))
 
     ################################################################################
     # Sorting morphisms
-    def argsort(f: 'FiniteFunction'):
+    def argsort(f: 'FiniteFunction') -> 'FiniteFunction':
         """
         Given a finite function                     ``f : A → B``
         Return the *stable* sorting permutation     ``p : A → A``
@@ -298,7 +314,7 @@ class FiniteFunction(ABC):
     # Given generating objects A_i and B_i for i ∈ ord{n},
     #   interleave : (A₀ ● A₁ ● ... ● An) ● (B₀ ● B₁ ● ... ● Bn) → (A₀ ● B₀) ● .. ● (An ● Bn)
     @classmethod
-    def interleave(cls, N: int):
+    def interleave(cls, N: int) -> 'FiniteFunction':
         table = cls.Array.zeros(2*N, dtype=int)
         table[0:N] = cls.Array.arange(0, N)*2
         table[N:] = table[0:N] + 1
@@ -307,7 +323,7 @@ class FiniteFunction(ABC):
     # Given generating objects A_i and B_i for i ∈ ord{n},
     #   cointerleave : (A₀ ● B₀) ● .. ● (An ● Bn) → (A₀ ● A₁ ● ... ● An) ● (B₀ ● B₁ ● ... ● Bn)
     @classmethod
-    def cointerleave(cls, N):
+    def cointerleave(cls, N) -> 'FiniteFunction':
         table = cls.Array.zeros(2*N, dtype=int)
         table[0::2] = cls.Array.arange(0, N)
         table[1::2] = table[0::2] + N
@@ -425,13 +441,13 @@ class IndexedCoproduct(HasFiniteFunction):
         assert len(self.values) == self.Array.sum(self.sources.table)
 
     @classmethod
-    def initial(cls, target, dtype=DTYPE):
+    def initial(cls, target: Target, dtype=DTYPE) -> 'IndexedCoproduct':
         return cls(
             cls.FiniteFunction().initial(None, dtype=dtype),
             cls.FiniteFunction().initial(target, dtype))
 
     @property
-    def target(self):
+    def target(self) -> Target:
         return self.values.target
 
     def __len__(self):
@@ -439,7 +455,7 @@ class IndexedCoproduct(HasFiniteFunction):
         return len(self.sources)
 
     @classmethod
-    def from_list(cls, target, fs: List['FiniteFunction']):
+    def from_list(cls, target, fs: List['FiniteFunction']) -> 'IndexedCoproduct':
         """ Create an `IndexedCoproduct` from a list of :py:class:`FiniteFunction` """
         assert all(target == f.target for f in fs)
         return cls(
@@ -461,7 +477,29 @@ class IndexedCoproduct(HasFiniteFunction):
         for i in range(0, N):
             yield self.Fun(self.target, self.values.table[s_ptr[i]:s_ptr[i+1]])
 
-    def map(self, x: FiniteFunction):
+    def coproduct(self, x: FiniteFunction) -> FiniteFunction:
+        """Like ``map`` but only computes the ``values`` array of an IndexedCoproduct"""
+        assert x.target == len(self.sources)
+        return self.sources.injections(x) >> self.values
+
+    def map_values(self, x: FiniteFunction) -> 'IndexedCoproduct':
+        """ Given an :py:class:`IndexedCoproduct` of finite functions::
+
+            Σ_{i ∈ X} f_i : Σ_{i ∈ X} A_i → B
+
+        and a finite function::
+
+            b : B → C
+
+        return a new :py:class:`IndexedCoproduct` representing::
+
+            Σ_{i ∈ X} f_i : Σ_{i ∈ W} A_i → C
+        """
+        return type(self)(
+            sources = self.sources,
+            values = self.values >> x)
+
+    def map_indexes(self, x: FiniteFunction) -> 'IndexedCoproduct':
         """ Given an :py:class:`IndexedCoproduct` of finite functions::
 
             Σ_{i ∈ X} f_i : Σ_{i ∈ X} A_i → B
@@ -477,11 +515,6 @@ class IndexedCoproduct(HasFiniteFunction):
         return type(self)(
             sources = x >> self.sources,
             values = self.coproduct(x))
-
-    def coproduct(self, x: FiniteFunction) -> FiniteFunction:
-        """Like ``map`` but only computes the ``values`` array of an IndexedCoproduct"""
-        assert x.target == len(self.sources)
-        return self.sources.injections(x) >> self.values
 
 class HasIndexedCoproduct(HasFiniteFunction):
     """ Classes which have a chosen indexed coproduct implementation """

@@ -148,7 +148,7 @@ class FiniteFunctionSpec:
 
         assert len(c) == len(fs)
 
-        d = c.map(x)
+        d = c.map_indexes(x)
         assert len(d) == len(x)
         assert d.sources == expected_sources
         assert d.values == expected_values

@@ -87,6 +87,10 @@ class ArrayBackend(Protocol[A]):
     def argsort(cls, x: A) -> A:
         ...
 
+    @classmethod
+    def full(cls, n, x, dtype=None) -> A:
+        ...
+
     ########################################
     # Non-primitive routines (i.e., vector routines built out of primitives)
 

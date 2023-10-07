@@ -13,6 +13,13 @@ class HypergraphSpec:
         assert H.t.target == H.w.source
 
     @given(Hyp.labels())
+    def test_empty(self, labels):
+        w, x = labels
+        H = Hypergraph.empty(w.to_initial(), x.to_initial())
+        assert H.W == 0
+        assert H.X == 0
+
+    @given(Hyp.labels())
     def test_discrete(self, labels):
         w, x = labels
 

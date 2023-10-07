@@ -77,6 +77,20 @@ class NumpyBackend(ArrayBackend):
     def concatenate(cls, *args, **kwargs):
         return np.concatenate(*args, **kwargs)
 
+    ########################################
+    # Utilities
+
+    @classmethod
+    def full(cls, n, x, dtype=None) -> np.ndarray:
+        return np.full(n, x, dtype=dtype)
+
+    @classmethod
+    def argsort(cls, x: np.ndarray) -> np.ndarray:
+        return np.argsort(x, kind='stable')
+
+    # def bincount(x, *args, **kwargs):
+        # return np.bincount(x, *args, **kwargs)
+
     # Compute the connected components of a graph.
     # connected components of a graph, encoded as a list of edges between points
     # so we have s, t arrays encoding edges (s[i], t[i]) of a square n×n matrix.
@@ -111,13 +125,3 @@ class NumpyBackend(ArrayBackend):
         # compute & return connected components
         c, cc_ix = sparse.csgraph.connected_components(M)
         return c, cc_ix
-
-    # def bincount(x, *args, **kwargs):
-        # return np.bincount(x, *args, **kwargs)
-
-    # def full(n, x, *args, **kwargs):
-        # kwargs.setdefault('dtype', DEFAULT_DTYPE)
-        # return np.full(n, x, *args, **kwargs)
-
-    # def argsort(x):
-        # return np.argsort(x, kind='stable')

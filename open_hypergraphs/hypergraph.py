@@ -34,7 +34,7 @@ class Hypergraph(HasIndexedCoproduct):
     @classmethod
     def empty(cls, w: FiniteFunction, x: FiniteFunction) -> 'Hypergraph':
         """ Construct the empty hypergraph with no hypernodes or hyperedges """
-        e = cls.FiniteFunction().initial(0)
+        e = cls.IndexedCoproduct().initial(0)
         return cls(e, e, w, x)
 
     @classmethod
@@ -75,6 +75,11 @@ def universal(q: FiniteFunction, f: FiniteFunction):
     Compute the universal map u : Q → B'
     such that q ; u = f.
     """
+    if q.target is None:
+        raise q._nonfinite_target()
+    if f.target is None:
+        raise f._nonfinite_target()
+
     target = f.target
     u = q.Array.zeros(q.target, dtype=f.table.dtype)
     # TODO: in the below we assume the PRAM CRCW model: multiple writes to the
