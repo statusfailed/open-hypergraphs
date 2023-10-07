@@ -1,25 +1,22 @@
+from typing import Type
 import open_hypergraphs.finite_function as f
 import open_hypergraphs.hypergraph as h
 import open_hypergraphs.open_hypergraph as o
 
-import open_hypergraphs.array.numpy as numpy_backend
+from open_hypergraphs.array.numpy import NumpyBackend
 
-class FiniteFunction(f.AbstractFiniteFunction):
-    Array = numpy_backend
+class FiniteFunction(f.FiniteFunction):
+    Array = NumpyBackend
 
-class IndexedCoproduct(f.AbstractIndexedCoproduct):
-    Fun = FiniteFunction
+class IndexedCoproduct(f.IndexedCoproduct):
+    @classmethod
+    def FiniteFunction(cls) -> Type[f.FiniteFunction]:
+        return FiniteFunction
 
 class Hypergraph(h.Hypergraph):
     @classmethod
-    @property
-    def Fun(cls):
-        return FiniteFunction
+    def IndexedCoproduct(cls) -> Type[f.IndexedCoproduct]:
+        return IndexedCoproduct
 
 class OpenHypergraph(o.OpenHypergraph):
-    Fun        = FiniteFunction
-    Hypergraph = Hypergraph
-
-FiniteFunction.IndexedCoproduct = IndexedCoproduct
-FiniteFunction.Hypergraph = Hypergraph
-FiniteFunction.OpenHypergraph = OpenHypergraph
+    pass

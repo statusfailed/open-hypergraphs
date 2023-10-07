@@ -2,7 +2,7 @@ from hypothesis import given
 
 from tests.strategy.finite_function import FiniteFunctionStrategies as FinFun
 
-from open_hypergraphs.finite_function import AbstractFiniteFunction, AbstractIndexedCoproduct
+from open_hypergraphs.finite_function import FiniteFunction, IndexedCoproduct
 
 class FiniteFunctionSpec:
 
@@ -61,7 +61,7 @@ class FiniteFunctionSpec:
         assert f.to_initial() == FinFun.Fun.initial(f.target)
 
     @given(FinFun.indexed_coproducts(n=2))
-    def test_coproduct_diagram_commutes(self, c: AbstractIndexedCoproduct):
+    def test_coproduct_diagram_commutes(self, c: IndexedCoproduct):
         f, g = c # note: this uses the IndexedCoproduct's __iter__ to unpack
         i0 = FinFun.Fun.inj0(f.source, g.source)
         i1 = FinFun.Fun.inj1(f.source, g.source)
@@ -120,7 +120,7 @@ class FiniteFunctionSpec:
     # Finite (indexed) coproducts
 
     @given(s=FinFun.arrows())
-    def test_injection_coproduct_identity(self, s: AbstractFiniteFunction):
+    def test_injection_coproduct_identity(self, s: FiniteFunction):
         """ Test that the (finite) coproduct of injections is the identity
             ι_0 + ι_1 + ... + ι_N = identity(sum_{i ∈ N} s(i))
         """

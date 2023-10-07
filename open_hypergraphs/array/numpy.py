@@ -11,134 +11,113 @@ It's used by :py:class:`FiniteFunction`.
 import numpy as np
 import scipy.sparse as sparse
 
-DEFAULT_DTYPE='int64'
+from open_hypergraphs.array.backend import ArrayBackend
 
-Type = np.ndarray
-""" The underlying array type used by functions in the backend. For numpy this is ``np.ndarray``.
 
-   :meta hide-value:
-"""
-# NOTE: we use :meta hide-value: above because numpy is mocked, so sphinx will
-# have the incorrect value in documentation.
+class NumpyBackend(ArrayBackend):
+    DEFAULT_DTYPE = np.int64
 
-def array(*args, **kwargs):
-    kwargs.setdefault('dtype', DEFAULT_DTYPE)
-    return np.fromiter(*args, **kwargs)
+    Type = np.ndarray
+    """ The underlying array type used by functions in the backend. For numpy this is ``np.ndarray``.
 
-def max(*args, **kwargs):
-    return np.max(*args, **kwargs)
-
-def arange(*args, **kwargs):
-    return np.arange(*args, **kwargs)
-
-def all(*args, **kwargs):
-    return np.all(*args, **kwargs)
-
-def any(*args, **kwargs):
-    return np.any(*args, **kwargs)
-
-def zeros(*args, **kwargs):
-    kwargs.setdefault('dtype', DEFAULT_DTYPE)
-    return np.zeros(*args, **kwargs)
-
-def ones(*args, **kwargs):
-    kwargs.setdefault('dtype', DEFAULT_DTYPE)
-    return np.ones(*args, **kwargs)
-
-def cumsum(*args, **kwargs):
-    return np.cumsum(*args, **kwargs)
-
-def sum(*args, **kwargs):
-    return np.sum(*args, **kwargs)
-
-def repeat(*args, **kwargs):
-    return np.repeat(*args, **kwargs)
-
-def concatenate(*args, **kwargs):
-    return np.concatenate(*args, **kwargs)
-
-# Compute the connected components of a graph.
-# connected components of a graph, encoded as a list of edges between points
-# so we have s, t arrays encoding edges (s[i], t[i]) of a square n×n matrix.
-# NOTE: we have to wrap libraries since we don't tend to get a consistent interface,
-# and don't want to expose e.g. sparse graphs in the main code.
-def connected_components(source, target, n, dtype=DEFAULT_DTYPE):
-    """Compute the connected components of a graph with ``N`` nodes,
-    whose edges are encoded as a pair of arrays ``(source, target)``
-    such that the edges of the graph are ``source[i] → target[i]``.
-
-    Args:
-        source(array): A length-N array with elements in the set ``{0 .. N - 1}``.
-        target(array): A length-N array with elements in the set ``{0 .. N - 1}``.
-
-    Returns:
-        (int, array):
-
-        A pair ``(c, cc_ix)`` of the number of connected components
-        ``c`` and a mapping from nodes to connected components ``cc_ix``.
+       :meta hide-value:
     """
-    if len(source) != len(target):
-        raise ValueError("Expected a graph encoded as a pair of arrays (source, target) of the same length")
+    # NOTE: we use :meta hide-value: above because numpy is mocked, so sphinx will
+    # have the incorrect value in documentation.
 
-    assert len(source) == len(target)
+    @classmethod
+    def to_dtype(cls, dtype=None):
+        return cls.DEFAULT_DTYPE
 
-    # make an n×n sparse matrix representing the graph with edges
-    # source[i] → target[i]
-    ones = np.ones(len(source), dtype=DEFAULT_DTYPE)
-    M = sparse.csr_matrix((ones, (source, target)), shape=(n, n))
+    @classmethod
+    def array(cls, elems, dtype=None):
+        dtype = cls.to_dtype(dtype)
+        return np.fromiter(elems, dtype)
 
-    # compute & return connected components
-    c, cc_ix = sparse.csgraph.connected_components(M)
-    return c, cc_ix
+    @classmethod
+    def arange(cls, start: int, stop: int, dtype=None) -> np.ndarray:
+        dtype = cls.to_dtype(dtype)
+        return np.arange(start=start, stop=stop, dtype=dtype)
 
-def argsort(x):
-    return np.argsort(x, kind='stable')
+    @classmethod
+    def zeros(cls, n: int, dtype=None):
+        dtype = cls.to_dtype(dtype)
+        return np.zeros(n, dtype=dtype)
 
-################################################################################
-# Non-primitive routines (i.e., vector routines built out of primitives)
-# TODO: implement an "asbtract array library" class, inherit faster impls for numpy etc.
+    @classmethod
+    def ones(cls, n: int, dtype=None):
+        dtype = cls.to_dtype(dtype)
+        return np.ones(n, dtype=dtype)
 
-# e.g.,
-#   x       = [ 2 3 0 5 ]
-#   output  = [ 0 1 | 0 1 2 | | 0 1 2 3 4 ]
-# compute ptrs
-#   p       = [ 0 2 5 5 ]
-#   r       = [ 0 0 | 2 2 2 | | 5 5 5 5 5 ]
-#   i       = [ 0 1   2 3 4     5 6 7 8 9 ]
-#   i - r   = [ 0 1 | 0 1 2 | | 0 1 2 3 4 ]
-# Note: r is computed as repeat(p, n)
-#
-# Complexity
-#   O(n)     sequential
-#   O(log n) PRAM CREW (cumsum is log n)
-def segmented_arange(x):
-    """Given an array of *sizes*, ``[x₀, x₁, ...]``  output an array equal to the concatenation
-    ``concatenate([arange(x₀), arange(x₁), ...])``
+    @classmethod
+    def max(cls, x: np.ndarray):
+        return np.max(x)
 
-    >>> FiniteFunction._Array.segmented_arange([5, 2, 3, 1])
-    array([0, 1, 2, 3, 4, 0, 1, 0, 1, 2, 0])
+    @classmethod
+    def all(cls, x: np.ndarray):
+        return np.all(x)
 
-    Params:
-        x: An array of the sizes of each "segment" of the output
+    @classmethod
+    def any(cls, x: np.ndarray):
+        return np.any(x)
 
-    Returns:
-        array:
+    @classmethod
+    def cumsum(cls, x):
+        return np.cumsum(x)
 
-        segmented array with segment ``i`` equal to ``arange(i)``.
-    """
-    x = np.array(x, dtype=DEFAULT_DTYPE)
+    @classmethod
+    def sum(cls, *args, **kwargs):
+        return np.sum(*args, **kwargs)
 
-    # create segment pointer array
-    ptr = np.zeros(len(x) + 1, dtype=x.dtype) # O(1) PRAM
-    ptr[1:] = np.cumsum(x)                    # O(log x) PRAM
-    N = ptr[-1] # total size
+    @classmethod
+    def repeat(cls, *args, **kwargs):
+        return np.repeat(*args, **kwargs)
 
-    r = np.repeat(ptr[:-1], x) # O(log x) PRAM
-    return np.arange(0, N) - r # O(1)     PRAM
+    @classmethod
+    def concatenate(cls, *args, **kwargs):
+        return np.concatenate(*args, **kwargs)
 
-def bincount(x, *args, **kwargs):
-    return np.bincount(x, *args, **kwargs)
+    # Compute the connected components of a graph.
+    # connected components of a graph, encoded as a list of edges between points
+    # so we have s, t arrays encoding edges (s[i], t[i]) of a square n×n matrix.
+    # NOTE: we have to wrap libraries since we don't tend to get a consistent interface,
+    # and don't want to expose e.g. sparse graphs in the main code.
+    @classmethod
+    def connected_components(cls, source, target, n, dtype=None):
+        """Compute the connected components of a graph with ``N`` nodes,
+        whose edges are encoded as a pair of arrays ``(source, target)``
+        such that the edges of the graph are ``source[i] → target[i]``.
 
-def full(n, x, *args, **kwargs):
-    kwargs.setdefault('dtype', DEFAULT_DTYPE)
-    return np.full(n, x, *args, **kwargs)
+        Args:
+            source(array): A length-N array with elements in the set ``{0 .. N - 1}``.
+            target(array): A length-N array with elements in the set ``{0 .. N - 1}``.
+
+        Returns:
+            (int, array):
+
+            A pair ``(c, cc_ix)`` of the number of connected components
+            ``c`` and a mapping from nodes to connected components ``cc_ix``.
+        """
+        if len(source) != len(target):
+            raise ValueError("Expected a graph encoded as a pair of arrays (source, target) of the same length")
+
+        assert len(source) == len(target)
+
+        # make an n×n sparse matrix representing the graph with edges
+        # source[i] → target[i]
+        ones = np.ones(len(source), dtype=cls.DEFAULT_DTYPE)
+        M = sparse.csr_matrix((ones, (source, target)), shape=(n, n))
+
+        # compute & return connected components
+        c, cc_ix = sparse.csgraph.connected_components(M)
+        return c, cc_ix
+
+    # def bincount(x, *args, **kwargs):
+        # return np.bincount(x, *args, **kwargs)
+
+    # def full(n, x, *args, **kwargs):
+        # kwargs.setdefault('dtype', DEFAULT_DTYPE)
+        # return np.full(n, x, *args, **kwargs)
+
+    # def argsort(x):
+        # return np.argsort(x, kind='stable')

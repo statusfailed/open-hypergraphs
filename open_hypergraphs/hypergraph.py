@@ -1,21 +1,15 @@
-from typing import Any
-from abc import abstractmethod
+from typing import Any, Type
+from typing_extensions import Protocol
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from open_hypergraphs.finite_function import AbstractFiniteFunction, AbstractIndexedCoproduct
+from open_hypergraphs.finite_function import FiniteFunction, IndexedCoproduct, HasIndexedCoproduct
 
 @dataclass
-class Hypergraph:
-    s: AbstractIndexedCoproduct # sources : Σ_{x ∈ X} arity(e) → W
-    t: AbstractIndexedCoproduct # targets : Σ_{x ∈ X} coarity(e) → W
-    w: AbstractFiniteFunction   # hypernode labels w : W → Σ₀
-    x: AbstractFiniteFunction   # hyperedge labels x : X → Σ₁
-
-    # The type of hypergraphs is parametrised over the type of finite functions.
-    @classmethod
-    @property
-    @abstractmethod
-    def Fun(cls):
-        ...
+class Hypergraph(HasIndexedCoproduct):
+    s: IndexedCoproduct # sources : Σ_{x ∈ X} arity(e) → W
+    t: IndexedCoproduct # targets : Σ_{x ∈ X} coarity(e) → W
+    w: FiniteFunction   # hypernode labels w : W → Σ₀
+    x: FiniteFunction   # hyperedge labels x : X → Σ₁
 
     # number of vertices
     @property
@@ -31,48 +25,50 @@ class Hypergraph:
         assert self.s.target == self.W
         assert self.t.target == self.W
 
-        assert type(self.s) == self.Fun.IndexedCoproduct
-        assert type(self.t) == self.Fun.IndexedCoproduct
+        assert type(self.s) == type(self).IndexedCoproduct()
+        assert type(self.t) == type(self).IndexedCoproduct()
 
         assert len(self.s.sources) == self.X
         assert len(self.t.sources) == self.X
 
     @classmethod
-    def empty(cls, w, x):
+    def empty(cls, w: FiniteFunction, x: FiniteFunction) -> 'Hypergraph':
         """ Construct the empty hypergraph with no hypernodes or hyperedges """
-        e = cls.Fun.initial(0)
+        e = cls.FiniteFunction().initial(0)
         return cls(e, e, w, x)
 
     @classmethod
-    def discrete(cls, w, x):
+    def discrete(cls, w: FiniteFunction, x: FiniteFunction) -> 'Hypergraph':
         """ The discrete hypergraph, consisting of only hypernodes """
         if len(x) > 0:
             raise ValueError(f"Hypergraph.discrete(w, x) must be called with len(x) == 0, but x : {x.source} → {x.target}")
 
         return cls(
-            s = cls.Fun.IndexedCoproduct.initial(len(w)),
-            t = cls.Fun.IndexedCoproduct.initial(len(w)),
+            s = cls.IndexedCoproduct().initial(len(w)),
+            t = cls.IndexedCoproduct().initial(len(w)),
             w = w,
             x = x)
 
-    def coproduct(f, g):
+    def coproduct(G, H):
         """ A coproduct of hypergraphs is pointwise on the components """
-        assert f.w.target == g.w.target
-        assert f.x.target == g.x.target
-        return type(f)(f.s @ g.s, f.t @ g.t, f.w + g.w, f.x + g.x)
+        assert G.w.target == H.w.target
+        assert G.x.target == H.x.target
+        return type(G)(G.s @ H.s, G.t @ H.t, G.w + H.w, G.x + H.x)
 
-    def __matmul__(f, g):
-        return f.coproduct(g)
+    def __matmul__(G, H):
+        return G.coproduct(H)
 
-    def coequalize_vertices(self, q: AbstractFiniteFunction):
+    def coequalize_vertices(self: 'Hypergraph', q: FiniteFunction) -> 'Hypergraph':
         assert q.source == self.W
         u = universal(q, self.w)
         if not (q >> u) == self.w:
             raise ValueError(f"Universal morphism doesn't make {q};{u}, {self.w} commute. Is q really a coequalizer?")
 
-        return type(self)(self.s >> q, self.t >> q, u, self.x)
+        # TODO: FIX BUG!!!
+        # We need to map self.s.values and self.t.values!
+        return type(self)(self.s >> q, self.t >> q, u, self.x) # type: ignore
 
-def universal(q: AbstractFiniteFunction, f: AbstractFiniteFunction):
+def universal(q: FiniteFunction, f: FiniteFunction):
     """
     Given a coequalizer q : B → Q of morphisms a, b : A → B
     and some f : B → B' such that f(a) = f(b),
@@ -80,7 +76,7 @@ def universal(q: AbstractFiniteFunction, f: AbstractFiniteFunction):
     such that q ; u = f.
     """
     target = f.target
-    u = q._Array.zeros(q.target, dtype=f.table.dtype)
+    u = q.Array.zeros(q.target, dtype=f.table.dtype)
     # TODO: in the below we assume the PRAM CRCW model: multiple writes to the
     # same memory location in the 'u' array can happen in parallel, with an
     # arbitrary write succeeding.
@@ -89,3 +85,9 @@ def universal(q: AbstractFiniteFunction, f: AbstractFiniteFunction):
     # However, this won't perform well on e.g., GPU hardware. FIXME!
     u[q.table] = f.table
     return type(f)(target, u)
+
+class HasHypergraph(HasIndexedCoproduct):
+    @classmethod
+    @abstractmethod
+    def Hypergraph(cls) -> Type[Hypergraph]:
+        ...

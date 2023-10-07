@@ -21,6 +21,7 @@ class FiniteFunctionStrategies:
     # open-hypergraphs Array backend and FiniteFunction implementation(?)
     Array = None
     Fun = None
+    IndexedCoproduct = None
 
     # Largest object to test with
     MAX_OBJECT = 32
@@ -152,7 +153,7 @@ class FiniteFunctionStrategies:
             source=cls.Fun.Array.sum(sources.table),
             target=target))
 
-        return cls.Fun.IndexedCoproduct(sources=sources, values=values)
+        return cls.IndexedCoproduct(sources=sources, values=values)
 
     @classmethod
     @st.composite

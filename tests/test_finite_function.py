@@ -7,7 +7,7 @@ from hypothesis import strategies as st
 from tests.strategy.finite_function import FiniteFunctionStrategies
 from tests.spec.finite_function import FiniteFunctionSpec
 
-from open_hypergraphs import FiniteFunction
+from open_hypergraphs import FiniteFunction, IndexedCoproduct
 
 # NOTE: Hypothesis seems to have a bug where zero-length arrays trigger an
 # error, so we'll just use numpy's random module instead.
@@ -28,7 +28,10 @@ class TestFiniteFunction(unittest.TestCase, FiniteFunctionSpec):
         # guaranteed to run tests single-threaded.
         # "arrays" is a generator for arrays of the backend
         FiniteFunctionStrategies.arrays = numpy_arrays
+
         # Fun is the FiniteFunction implementation
         FiniteFunctionStrategies.Fun = FiniteFunction
+        FiniteFunctionStrategies.IndexedCoproduct = IndexedCoproduct
+
         # Array is the array backend
         FiniteFunctionStrategies.Array = FiniteFunction.Array
