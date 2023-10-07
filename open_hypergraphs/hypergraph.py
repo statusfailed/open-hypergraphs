@@ -55,41 +55,15 @@ class Hypergraph(HasIndexedCoproduct):
         assert G.x.target == H.x.target
         return type(G)(G.s @ H.s, G.t @ H.t, G.w + H.w, G.x + H.x)
 
-    def __matmul__(G: 'Hypergraph', H: 'Hypergraph') -> 'Hypergraph':
+    def __add__(G: 'Hypergraph', H: 'Hypergraph') -> 'Hypergraph':
         return G.coproduct(H)
 
     def coequalize_vertices(self: 'Hypergraph', q: FiniteFunction) -> 'Hypergraph':
         assert q.source == self.W
-        u = universal(q, self.w)
-        if not (q >> u) == self.w:
-            raise ValueError(f"Universal morphism doesn't make {q};{u}, {self.w} commute. Is q really a coequalizer?")
-
+        u = q.coequalizer_universal(self.w)
         # TODO: FIX BUG!!!
         # We need to map self.s.values and self.t.values!
         return type(self)(self.s >> q, self.t >> q, u, self.x) # type: ignore
-
-def universal(q: FiniteFunction, f: FiniteFunction):
-    """
-    Given a coequalizer q : B → Q of morphisms a, b : A → B
-    and some f : B → B' such that f(a) = f(b),
-    Compute the universal map u : Q → B'
-    such that q ; u = f.
-    """
-    if q.target is None:
-        raise q._nonfinite_target()
-    if f.target is None:
-        raise f._nonfinite_target()
-
-    target = f.target
-    u = q.Array.zeros(q.target, dtype=f.table.dtype)
-    # TODO: in the below we assume the PRAM CRCW model: multiple writes to the
-    # same memory location in the 'u' array can happen in parallel, with an
-    # arbitrary write succeeding.
-    # Note that this doesn't affect correctness because q and f are co-forks,
-    # and q is a coequalizer.
-    # However, this won't perform well on e.g., GPU hardware. FIXME!
-    u[q.table] = f.table
-    return type(f)(target, u)
 
 class HasHypergraph(HasIndexedCoproduct):
     @classmethod

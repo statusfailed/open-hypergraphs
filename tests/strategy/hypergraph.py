@@ -27,11 +27,16 @@ class HypergraphStrategies:
 
     @classmethod
     @st.composite
-    def objects(draw, cls):
+    def objects(draw, cls, n=1):
         """ Generate a random (non-acyclic) hypergraph """
+        assert n >= 1
         x, w = draw(cls.labels())
         X, W = len(x), len(w)
 
-        s = draw(FinFun.indexed_coproducts(n=X, target=W))
-        t = draw(FinFun.indexed_coproducts(n=X, target=W))
-        return cls.Hypergraph(s, t, w, x)
+        result = [None]*n
+        for i in range(0, n):
+            s = draw(FinFun.indexed_coproducts(n=X, target=W))
+            t = draw(FinFun.indexed_coproducts(n=X, target=W))
+            result[i] = cls.Hypergraph(s, t, w, x)
+
+        return result

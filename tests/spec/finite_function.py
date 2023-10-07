@@ -1,4 +1,5 @@
 from hypothesis import given
+import hypothesis.strategies as st
 
 from tests.strategy.finite_function import FiniteFunctionStrategies as FinFun
 
@@ -115,6 +116,41 @@ class FiniteFunctionSpec:
         f, g = fg
         c = f.coequalizer(g)
         assert (f >> c) == (g >> c)
+
+    @given(fg=FinFun.parallel_arrows(n=2))
+    def test_coequalizer_universal_identity(self, fg):
+        f, g = fg
+        q = f.coequalizer(g)
+        u = q.coequalizer_universal(q)
+        assert u == type(u).identity(q.target)
+
+
+    # A custom strategy to generate a coequalizer
+    #   q : A → Q
+    # and a compatible permutation
+    #   p : Q → Q
+    @st.composite
+    @staticmethod
+    def coequalizer_and_permutation(draw):
+        f, g = draw(FinFun.parallel_arrows(n=2))
+        q = f.coequalizer(g)
+        p = draw(FinFun.permutations(target=q.target))
+        return f, g, q, p
+
+    @given(coequalizer_and_permutation())
+    def test_coequalizer_and_permutation(self, fgqp):
+        """ Coequalizers are unique only up to permutation. This checks that a
+        coequalizer postcomposed with a permutation commutes with the universal
+        morphism """
+        f, g, q0, p = fgqp
+
+        assert f.target == g.target
+        assert f.target == q0.source
+        assert p.source == q0.target
+
+        q1 = q0 >> p
+        u  = q0.coequalizer_universal(q1)
+        assert q0 >> u == q1
 
     ############################################################################
     # Finite (indexed) coproducts

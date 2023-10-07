@@ -284,6 +284,33 @@ class FiniteFunction(ABC):
         Q, q = cls.Array.connected_components(f.table, g.table, f.target)
         return cls(Q, q)
 
+    def coequalizer_universal(q: 'FiniteFunction', f: 'FiniteFunction') -> 'FiniteFunction':
+        """
+        Given a coequalizer q : B → Q of morphisms a, b : A → B
+        and some f : B → B' such that f(a) = f(b),
+        Compute the universal map u : Q → B'
+        such that q ; u = f.
+        """
+        if q.target is None:
+            raise q._nonfinite_target()
+        if f.target is None:
+            raise f._nonfinite_target()
+
+        target = f.target
+        table = q.Array.zeros(q.target, dtype=f.table.dtype)
+        # TODO: in the below we assume the PRAM CRCW model: multiple writes to the
+        # same memory location in the 'u' array can happen in parallel, with an
+        # arbitrary write succeeding.
+        # Note that this doesn't affect correctness because q and f are co-forks,
+        # and q is a coequalizer.
+        # However, this won't perform well on e.g., GPU hardware. FIXME!
+        table[q.table] = f.table
+        u = type(f)(target, table)
+        if not (q >> u) == f:
+            raise ValueError("Universal morphism doesn't make {q} ; {u} commute. Is q really a coequalizer?")
+        return u
+
+
     ################################################################################
     # FiniteFunction also has cartesian structure which is useful
     @classmethod
@@ -401,7 +428,6 @@ class FiniteFunction(ABC):
         # NOTE: p[-1] is sum(s).
         cls = type(s)
         return cls(p[-1], r + cls.Array.repeat(p[a.table], k.table))
-
 
 class HasFiniteFunction(Protocol):
     """ Classes which have a chosen finite function implementation """

@@ -17,6 +17,7 @@ class FiniteFunctionStrategies:
 
     # Generators for numpy-compatible arrays
     arrays = None
+    permutation_arrays = None
 
     # open-hypergraphs Array backend and FiniteFunction implementation(?)
     Array = None
@@ -85,6 +86,15 @@ class FiniteFunctionStrategies:
             # NOTE: set high to MAX_OBJECT if non-finite.
             high = cls.MAX_OBJECT if target is None else target
             table = draw(cls.arrays(n=source, high=high))
+        return cls.Fun(target, table)
+
+    @classmethod
+    @st.composite
+    def permutations(draw, cls, target=Random):
+        if target is Random:
+            target = draw(cls.objects())
+
+        table = draw(cls.permutation_arrays(n=target))
         return cls.Fun(target, table)
 
     @classmethod
