@@ -49,13 +49,13 @@ class Hypergraph(HasIndexedCoproduct):
             w = w,
             x = x)
 
-    def coproduct(G, H):
+    def coproduct(G: 'Hypergraph', H: 'Hypergraph') -> 'Hypergraph':
         """ A coproduct of hypergraphs is pointwise on the components """
         assert G.w.target == H.w.target
         assert G.x.target == H.x.target
         return type(G)(G.s @ H.s, G.t @ H.t, G.w + H.w, G.x + H.x)
 
-    def __matmul__(G, H):
+    def __matmul__(G: 'Hypergraph', H: 'Hypergraph') -> 'Hypergraph':
         return G.coproduct(H)
 
     def coequalize_vertices(self: 'Hypergraph', q: FiniteFunction) -> 'Hypergraph':

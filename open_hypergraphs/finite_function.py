@@ -477,7 +477,23 @@ class IndexedCoproduct(HasFiniteFunction):
         for i in range(0, N):
             yield self.Fun(self.target, self.values.table[s_ptr[i]:s_ptr[i+1]])
 
-    def coproduct(self, x: FiniteFunction) -> FiniteFunction:
+    def coproduct(x: 'IndexedCoproduct', y: 'IndexedCoproduct') -> 'IndexedCoproduct':
+        return type(x)(
+            sources = x.sources + y.sources,
+            values  = x.values + y.values)
+
+    def __add__(x: 'IndexedCoproduct', y: 'IndexedCoproduct') -> 'IndexedCoproduct':
+        return x.coproduct(y)
+
+    def tensor(x: 'IndexedCoproduct', y: 'IndexedCoproduct') -> 'IndexedCoproduct':
+        return type(x)(
+            sources = x.sources + y.sources,
+            values  = x.values @ y.values)
+
+    def __matmul__(x: 'IndexedCoproduct', y: 'IndexedCoproduct') -> 'IndexedCoproduct':
+        return x.tensor(y)
+
+    def indexed_values(self, x: FiniteFunction) -> FiniteFunction:
         """Like ``map`` but only computes the ``values`` array of an IndexedCoproduct"""
         assert x.target == len(self.sources)
         return self.sources.injections(x) >> self.values
@@ -514,7 +530,7 @@ class IndexedCoproduct(HasFiniteFunction):
         """
         return type(self)(
             sources = x >> self.sources,
-            values = self.coproduct(x))
+            values = self.indexed_values(x))
 
 class HasIndexedCoproduct(HasFiniteFunction):
     """ Classes which have a chosen indexed coproduct implementation """
