@@ -5,7 +5,7 @@ from tests.spec.finite_function import FiniteFunctionSpec
 
 from open_hypergraphs import FiniteFunction, IndexedCoproduct
 
-from tests.strategy.numpy import arrays, permutations
+from tests.strategy.numpy import DEFAULT_DTYPE, arrays, permutations
 
 class TestFiniteFunction(unittest.TestCase, FiniteFunctionSpec):
     @classmethod
@@ -15,6 +15,7 @@ class TestFiniteFunction(unittest.TestCase, FiniteFunctionSpec):
         # This kinda sucks, but it works reliably because hypothesis is
         # guaranteed to run tests single-threaded.
         # "arrays" is a generator for arrays of the backend
+        FiniteFunctionStrategies.DEFAULT_DTYPE = DEFAULT_DTYPE
         FiniteFunctionStrategies.arrays = arrays
         FiniteFunctionStrategies.permutation_arrays = permutations
 

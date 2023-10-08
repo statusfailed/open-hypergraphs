@@ -1,9 +1,6 @@
 import hypothesis.strategies as st
 
-# A dummy value to indicate that a value should be generated.
-# It's used in arrow_type to disambiguate from the "None" target.
-class Random:
-    pass
+from tests.strategy.random import Random
 
 def _is_valid_arrow_type(A, B):
     if B == 0:
@@ -16,6 +13,7 @@ class FiniteFunctionStrategies:
     """
 
     # Generators for numpy-compatible arrays
+    DEFAULT_DTYPE = None
     arrays = None
     permutation_arrays = None
 
@@ -81,11 +79,11 @@ class FiniteFunctionStrategies:
             finite_target=finite_target))
 
         if target == 0:
-            table = cls.Array.zeros(0, dtype=int)
+            table = cls.Array.zeros(0, dtype=cls.DEFAULT_DTYPE)
         else:
             # NOTE: set high to MAX_OBJECT if non-finite.
             high = cls.MAX_OBJECT if target is None else target
-            table = draw(cls.arrays(n=source, high=high))
+            table = draw(cls.arrays(n=source, high=high, dtype=cls.DEFAULT_DTYPE))
         return cls.Fun(target, table)
 
     @classmethod
@@ -94,7 +92,7 @@ class FiniteFunctionStrategies:
         if target is Random:
             target = draw(cls.objects())
 
-        table = draw(cls.permutation_arrays(n=target))
+        table = draw(cls.permutation_arrays(n=target, dtype=cls.DEFAULT_DTYPE))
         return cls.Fun(target, table)
 
     @classmethod
@@ -153,11 +151,18 @@ class FiniteFunctionStrategies:
     @st.composite
     def indexed_coproducts(draw, cls, n=Random, target=Random):
         if n is Random:
-            n = draw(cls.coproduct_indexes())
+            n = draw(cls.coproduct_indexes()) + 1
 
-        sources = draw(cls.arrows(source=n, target=None))
+        # IndexedCoproduct(s, v)
+        #   s : N → Inf
+        #   v : sum(s) → X
+        # when X == 0, we must have sum(s) == 0, so s is an array of zeros.
+        max_source = Random if target is Random or target > 0 else 1
+        sources = draw(cls.arrows(source=n, target=max_source))
+        sources.target = None # NOTE: need sources to be non-finite codomain.
+
+        # sum of sources is the source of the values array
         source = cls.Fun.Array.sum(sources.table)
-
         _, target = draw(cls.arrow_type(source=source, target=target))
         values = draw(cls.arrows(
             source=cls.Fun.Array.sum(sources.table),

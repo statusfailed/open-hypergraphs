@@ -19,7 +19,7 @@ class Hypergraph(HasIndexedCoproduct):
     # number of edges
     @property
     def X(self):
-        return self.x.source
+        return len(self.x)
 
     def __post_init__(self):
         assert self.s.target == self.W
@@ -28,8 +28,9 @@ class Hypergraph(HasIndexedCoproduct):
         assert type(self.s) == type(self).IndexedCoproduct()
         assert type(self.t) == type(self).IndexedCoproduct()
 
-        assert len(self.s.sources) == self.X
-        assert len(self.t.sources) == self.X
+        # Number of edges
+        assert len(self.s) == self.X
+        assert len(self.t) == self.X
 
     @classmethod
     def empty(cls, w: FiniteFunction, x: FiniteFunction) -> 'Hypergraph':
@@ -59,11 +60,11 @@ class Hypergraph(HasIndexedCoproduct):
         return G.coproduct(H)
 
     def coequalize_vertices(self: 'Hypergraph', q: FiniteFunction) -> 'Hypergraph':
-        assert q.source == self.W
+        assert self.W == q.source
         u = q.coequalizer_universal(self.w)
-        # TODO: FIX BUG!!!
-        # We need to map self.s.values and self.t.values!
-        return type(self)(self.s >> q, self.t >> q, u, self.x) # type: ignore
+        s = self.s.map_values(q)
+        t = self.t.map_values(q)
+        return type(self)(s, t, u, self.x) # type: ignore
 
 class HasHypergraph(HasIndexedCoproduct):
     @classmethod

@@ -291,10 +291,10 @@ class FiniteFunction(ABC):
         Compute the universal map u : Q → B'
         such that q ; u = f.
         """
+        # NOTE: we *don't* check that f.target is None: we can compute the
+        # universal map when f has non-finite target!
         if q.target is None:
             raise q._nonfinite_target()
-        if f.target is None:
-            raise f._nonfinite_target()
 
         target = f.target
         table = q.Array.zeros(q.target, dtype=f.table.dtype)

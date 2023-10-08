@@ -47,3 +47,31 @@ class HypergraphSpec:
         assert H.t.values == G[0].t.values @ G[1].t.values
         assert H.w == G[0].w + G[1].w
         assert H.x == G[0].x + G[1].x
+
+    @given(Hyp.discrete_span())
+    def test_hypergraph_coequalize_vertices(self, discrete_span):
+        L, l, K, r, R = discrete_span
+
+        assert L.w.target == R.w.target
+        assert L.w.table.dtype == R.w.table.dtype
+        assert L.x.target == R.x.target
+        assert L.x.table.dtype == R.x.table.dtype
+
+        # Smoketest for discrete_span strategy: check dtypes of all arrays are equal.
+        assert L.s.sources.table.dtype == R.s.sources.table.dtype
+        assert L.s.values.table.dtype == R.s.values.table.dtype
+
+        assert L.t.sources.table.dtype == R.t.sources.table.dtype
+        assert L.t.values.table.dtype == R.t.values.table.dtype
+
+        # Get the coproduct of L and R
+        G = L + R
+
+        # Coequalize parallel maps and identify the "shared" nodes K.
+        q = l.inject0(R.W).coequalizer(r.inject1(L.W))
+        H = G.coequalize_vertices(q)
+
+        # H should now have K.W fewer nodes, since we've "removed" one copy of
+        # the shared nodes K.
+        assert H.W == L.W + R.W - K.W
+        assert H.X == L.X + R.X

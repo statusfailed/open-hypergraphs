@@ -6,6 +6,7 @@ from collections.abc import MutableMapping
 
 # Arrays are (very) loosely typed
 class ArrayType(MutableMapping):
+    DEFAULT_DTYPE: Any
     dtype: Any
 
     def __sub__(self, other):

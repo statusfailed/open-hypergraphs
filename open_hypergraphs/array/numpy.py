@@ -27,7 +27,7 @@ class NumpyBackend(ArrayBackend):
 
     @classmethod
     def to_dtype(cls, dtype=None):
-        return cls.DEFAULT_DTYPE
+        return cls.DEFAULT_DTYPE if dtype is None else dtype
 
     @classmethod
     def array(cls, elems, dtype=None):
