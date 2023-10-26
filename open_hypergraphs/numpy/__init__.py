@@ -19,4 +19,6 @@ class Hypergraph(h.Hypergraph):
         return IndexedCoproduct
 
 class OpenHypergraph(o.OpenHypergraph):
-    pass
+    @classmethod
+    def Hypergraph(cls) -> Type[h.Hypergraph]:
+        return Hypergraph

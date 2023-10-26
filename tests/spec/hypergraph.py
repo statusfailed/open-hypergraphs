@@ -38,6 +38,10 @@ class HypergraphSpec:
         assert len(H.t) == 0
         assert len(H.x) == 0
 
+    @given(Hyp.discrete())
+    def test_discrete_is_discrete(self, H):
+        assert H.is_discrete()
+
     @given(Hyp.objects(n=2))
     def test_hypergraph_coproduct(self, G: List[Hypergraph]):
         H = G[0] + G[1]

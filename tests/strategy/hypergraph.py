@@ -46,6 +46,15 @@ class HypergraphStrategies:
 
         return result
 
+    # Draw a discrete hypergraph
+    @classmethod
+    @st.composite
+    def discrete(draw, cls):
+        w, x = draw(cls.labels())
+        # Make a discrete hypergraph with labels w.
+        [K] = draw(cls.objects(labels=(w, x.to_initial())))
+        return K
+
     # Draw a span of hypergraphs
     #     l   r
     #   L ← K → R

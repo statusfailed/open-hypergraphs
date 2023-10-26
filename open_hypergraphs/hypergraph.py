@@ -50,6 +50,10 @@ class Hypergraph(HasIndexedCoproduct):
             w = w,
             x = x)
 
+    def is_discrete(self) -> bool:
+        """ Check if a hypergraph is discrete """
+        return len(self.s) == 0 and len(self.t) == 0 and len(self.x) == 0
+
     def coproduct(G: 'Hypergraph', H: 'Hypergraph') -> 'Hypergraph':
         """ A coproduct of hypergraphs is pointwise on the components """
         assert G.w.target == H.w.target
@@ -71,3 +75,11 @@ class HasHypergraph(HasIndexedCoproduct):
     @abstractmethod
     def Hypergraph(cls) -> Type[Hypergraph]:
         ...
+
+    @classmethod
+    def IndexedCoproduct(cls) -> Type[IndexedCoproduct]:
+        return cls.Hypergraph().IndexedCoproduct()
+
+    @classmethod
+    def FiniteFunction(cls) -> Type[FiniteFunction]:
+        return cls.IndexedCoproduct().FiniteFunction()
