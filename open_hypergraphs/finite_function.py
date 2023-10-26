@@ -112,7 +112,7 @@ class FiniteFunction(ABC):
     # FiniteFunction forms a category
 
     @classmethod
-    def identity(cls, n: int) -> 'FiniteFunction':
+    def identity(cls, n: int, dtype=DTYPE) -> 'FiniteFunction':
         """Return the identity finite function of type n → n.
         Args:
             n(int): The object of which to return the identity map
@@ -121,7 +121,7 @@ class FiniteFunction(ABC):
             FiniteFunction: Identity map at n
         """
         assert n >= 0
-        return cls(n, cls.Array.arange(0, n, dtype=DTYPE))
+        return cls(n, cls.Array.arange(0, n, dtype=dtype))
 
     # Compute (f ; g), i.e., the function x → g(f(x))
     def compose(f: 'FiniteFunction', g: 'FiniteFunction') -> 'FiniteFunction':
@@ -174,15 +174,15 @@ class FiniteFunction(ABC):
         return type(self).initial(self.target, dtype=self.table.dtype)
 
     @classmethod
-    def inj0(cls, a: int, b: int) -> 'FiniteFunction':
+    def inj0(cls, a: int, b: int, dtype=DTYPE) -> 'FiniteFunction':
         """Compute the injection ``ι₀ : a → a + b``"""
-        table = cls.Array.arange(0, a, dtype=DTYPE)
+        table = cls.Array.arange(0, a, dtype=dtype)
         return cls(a + b, table)
 
     @classmethod
-    def inj1(cls, a: int, b: int) -> 'FiniteFunction':
+    def inj1(cls, a: int, b: int, dtype=DTYPE) -> 'FiniteFunction':
         """Compute the injection ``ι₁ : b → a + b``"""
-        table = cls.Array.arange(a, a + b, dtype=DTYPE)
+        table = cls.Array.arange(a, a + b, dtype=dtype)
         return cls(a + b, table)
 
     def inject0(f: 'FiniteFunction', b: int) -> 'FiniteFunction':
@@ -520,7 +520,7 @@ class IndexedCoproduct(HasFiniteFunction):
         return x.tensor(y)
 
     def indexed_values(self, x: FiniteFunction) -> FiniteFunction:
-        """Like ``map`` but only computes the ``values`` array of an IndexedCoproduct"""
+        """Like ``map_indexes`` but only computes the ``values`` array of an IndexedCoproduct"""
         assert x.target == len(self.sources)
         return self.sources.injections(x) >> self.values
 

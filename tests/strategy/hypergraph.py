@@ -3,9 +3,12 @@ import hypothesis.strategies as st
 from tests.strategy.random import Random
 from tests.strategy.finite_function import FiniteFunctionStrategies as FinFun
 
+from open_hypergraphs.open_hypergraph import HypergraphArrow
+
 class HypergraphStrategies:
     """ Hypothesis strategies for generating hypergraphs and arrows of hypergraphs """
     Hypergraph = None
+
 
     MAX_HYPERNODES = 32
 
@@ -25,7 +28,6 @@ class HypergraphStrategies:
         w = draw(FinFun.arrows(source=W, target=sigma_0))
 
         return w, x
-
 
     @classmethod
     @st.composite
@@ -55,6 +57,28 @@ class HypergraphStrategies:
         [K] = draw(cls.objects(labels=(w, x.to_initial())))
         return K
 
+    @classmethod
+    @st.composite
+    def inclusions(draw, cls, G: Hypergraph = None):
+        """ Given a hypergraph G, generate an inclusion ``i : G → H`` of ``G`` in ``H``
+        i₀ : G → G + H
+        """
+        if G is None:
+            [G] = draw(cls.objects(n=1))
+
+        # old labels + new labels
+        w = G.w + draw(FinFun.arrows(target=G.w.target))
+        x = G.x + draw(FinFun.arrows(target=G.x.target))
+        [H] = draw(cls.objects(labels=(w, x)))
+
+        # A morphism of hypergraphs is a mapping on vertices and edges, respectively!
+        dtype = G.s.values.table.dtype
+        return HypergraphArrow(
+            source=G,
+            target=H,
+            w=FinFun.Fun.inj0(G.W, H.W - G.W, dtype),
+            x=FinFun.Fun.inj0(G.X, H.X - G.X, dtype))
+
     # Draw a span of hypergraphs
     #     l   r
     #   L ← K → R
@@ -62,27 +86,20 @@ class HypergraphStrategies:
     @classmethod
     @st.composite
     def discrete_span(draw, cls):
-        w, x = draw(cls.labels())
+        K = draw(cls.discrete())
+        l = draw(cls.inclusions(K))
+        r = draw(cls.inclusions(K))
 
-        # Make a discrete hypergraph with labels w.
-        [K] = draw(cls.objects(labels=(w, x.to_initial())))
+        L = l.target
+        R = r.target
 
-        # L is K with a bunch of additional stuff included
-        w_L_prime = draw(FinFun.arrows(target=w.target))
-        w_L = w + w_L_prime # TODO!!! PICK UP FROM HERE
-        x_L = x + draw(FinFun.arrows(target=x.target))
-        [L] = draw(cls.objects(labels=(w_L, x_L)))
+        # Smoketest
+        # 0: Check that targets of l and r have the correct number of wires, operations
+        assert l.w.target == L.W
+        assert r.w.target == R.W
+        assert l.x.target == L.X
+        assert r.x.target == R.X
 
-        # R is K with a bunch of additional stuff included
-        w_R_prime = draw(FinFun.arrows(target=w.target))
-        w_R = w + w_R_prime
-        x_R = x + draw(FinFun.arrows(target=x.target))
-        [R] = draw(cls.objects(labels=(w_R, x_R)))
-
-        l = FinFun.Fun.inj0(len(w), len(w_L) - len(w))
-        r = FinFun.Fun.inj0(len(w), len(w_R) - len(w))
-
-        # Smoketest:
         # 1: Check that w/x maps have compatible targets and dtypes
         assert L.w.target == R.w.target
         assert L.w.table.dtype == R.w.table.dtype
@@ -96,5 +113,4 @@ class HypergraphStrategies:
         assert L.t.sources.table.dtype == R.t.sources.table.dtype
         assert L.t.values.table.dtype == R.t.values.table.dtype
 
-
-        return L, l, K, r, R
+        return l, K, r

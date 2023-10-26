@@ -2,7 +2,7 @@ from typing import Any, Type
 from typing_extensions import Protocol
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from open_hypergraphs.finite_function import FiniteFunction, IndexedCoproduct, HasIndexedCoproduct
+from open_hypergraphs.finite_function import DTYPE, FiniteFunction, IndexedCoproduct, HasIndexedCoproduct
 
 @dataclass
 class Hypergraph(HasIndexedCoproduct):
@@ -39,14 +39,14 @@ class Hypergraph(HasIndexedCoproduct):
         return cls(e, e, w, x)
 
     @classmethod
-    def discrete(cls, w: FiniteFunction, x: FiniteFunction) -> 'Hypergraph':
+    def discrete(cls, w: FiniteFunction, x: FiniteFunction, dtype=DTYPE) -> 'Hypergraph':
         """ The discrete hypergraph, consisting of only hypernodes """
         if len(x) > 0:
             raise ValueError(f"Hypergraph.discrete(w, x) must be called with len(x) == 0, but x : {x.source} → {x.target}")
 
         return cls(
-            s = cls.IndexedCoproduct().initial(len(w)),
-            t = cls.IndexedCoproduct().initial(len(w)),
+            s = cls.IndexedCoproduct().initial(len(w), dtype),
+            t = cls.IndexedCoproduct().initial(len(w), dtype),
             w = w,
             x = x)
 
@@ -83,3 +83,49 @@ class HasHypergraph(HasIndexedCoproduct):
     @classmethod
     def FiniteFunction(cls) -> Type[FiniteFunction]:
         return cls.IndexedCoproduct().FiniteFunction()
+
+@dataclass
+class HypergraphArrow:
+    # source and target hypergraphs
+    source: Hypergraph
+    target: Hypergraph
+
+    # components of a natural transformation on w and x
+    w: FiniteFunction
+    x: FiniteFunction
+
+    def __post_init__(self):
+        # TODO: have we checked everything that needs to commute?
+        f = self
+        G = self.source
+        H = self.target
+
+        assert f.w.source == G.W
+        assert f.w.target == H.W
+
+        assert f.x.source == G.X
+        assert f.x.target == H.X
+
+        # wire labels and operation labels preserved
+        assert G.w == f.w >> H.w
+        assert G.x == f.x >> H.x
+
+        # The types of operations should be preserved under the mapping
+        assert G.s.values >> G.w == H.s.indexed_values(f.x) >> H.w
+        assert G.t.values >> G.w == H.t.indexed_values(f.x) >> H.w
+
+    # def inj0(G₀: Hypergraph, G₁: Hypergraph):
+        # Fun = type(G₀).FiniteFunction()
+        # return HypergraphMorphism(
+                # source=G₀,
+                # target=G₀ + G₁,
+                # w = Fun.inj0(len(G₀.W), len(G₁.W)),
+                # x = Fun.inj0(len(G₀.X), len(G₁.X)))
+
+    # def inj1(G₀: Hypergraph, G₁: Hypergraph):
+        # Fun = type(G₀).FiniteFunction()
+        # return HypergraphMorphism(
+                # source=G₀,
+                # target=G₀ + G₁,
+                # w = Fun.inj1(len(G₀.W), len(G₁.W)),
+                # x = Fun.inj1(len(G₀.X), len(G₁.X)))
