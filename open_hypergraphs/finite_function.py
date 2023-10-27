@@ -320,9 +320,10 @@ class FiniteFunction(ABC):
 
     # TODO: rename this "element"?
     @classmethod
-    def singleton(cls, x: int, b: int, dtype=DTYPE) -> 'FiniteFunction':
+    def singleton(cls, x: int, b: int | None, dtype=DTYPE) -> 'FiniteFunction':
         """ return the singleton array ``[x]`` whose domain is ``b``. """
-        assert x < b
+        if type(b) is int and x >= b:
+            raise ValueError(f"{x} is not an element of the set {{0..{b}}}")
         return cls(b, cls.Array.full(1, x, dtype=dtype))
 
     ################################################################################
@@ -455,22 +456,26 @@ class IndexedCoproduct(HasFiniteFunction):
     values: FiniteFunction
 
     def __post_init__(self):
-        # TODO FIXME: make this type derivable from FiniteFunction so we
-        # don't need to have one version for each backend?
-        self.Fun = type(self.sources)
-        self.Array = self.Fun.Array
+        assert type(self.sources) == self.FiniteFunction()
+        assert type(self.values) == self.FiniteFunction()
+        # TODO FIXME: make Array type derivable from FiniteFunction
+        self.Array = self.FiniteFunction().Array
 
         # we always ignore the target of sources; this ensures
         # roundtrippability.
         assert self.sources.target is None
-        assert type(self.values) == self.Fun
         assert len(self.values) == self.Array.sum(self.sources.table)
 
     @classmethod
     def initial(cls, target: Target, dtype=DTYPE) -> 'IndexedCoproduct':
         return cls(
             cls.FiniteFunction().initial(None, dtype=dtype),
-            cls.FiniteFunction().initial(target, dtype))
+            cls.FiniteFunction().initial(target, dtype=dtype))
+
+    @classmethod
+    def singleton(cls, values: FiniteFunction) -> 'IndexedCoproduct':
+        sources = cls.FiniteFunction().singleton(len(values), None)
+        return cls(sources, values)
 
     @property
     def target(self) -> Target:
@@ -501,7 +506,7 @@ class IndexedCoproduct(HasFiniteFunction):
         s_ptr[1:] = self.Array.cumsum(self.sources.table)
 
         for i in range(0, N):
-            yield self.Fun(self.target, self.values.table[s_ptr[i]:s_ptr[i+1]])
+            yield self.FiniteFunction()(self.target, self.values.table[s_ptr[i]:s_ptr[i+1]])
 
     def coproduct(x: 'IndexedCoproduct', y: 'IndexedCoproduct') -> 'IndexedCoproduct':
         return type(x)(

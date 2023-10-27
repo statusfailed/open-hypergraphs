@@ -33,9 +33,9 @@ class Hypergraph(HasIndexedCoproduct):
         assert len(self.t) == self.X
 
     @classmethod
-    def empty(cls, w: FiniteFunction, x: FiniteFunction) -> 'Hypergraph':
+    def empty(cls, w: FiniteFunction, x: FiniteFunction, dtype=DTYPE) -> 'Hypergraph':
         """ Construct the empty hypergraph with no hypernodes or hyperedges """
-        e = cls.IndexedCoproduct().initial(0)
+        e = cls.IndexedCoproduct().initial(0, dtype=dtype)
         return cls(e, e, w, x)
 
     @classmethod

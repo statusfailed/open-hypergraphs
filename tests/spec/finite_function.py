@@ -102,7 +102,7 @@ class FiniteFunctionSpec:
 
     @given(f=FinFun.arrows(), g=FinFun.arrows())
     def test_twist_naturality(self, f, g):
-        """ Check naturality of σ, so that (f @ g) ; σ = σ ; (f @ g) """
+        """ Check naturality of σ, so that (f @ g) ; σ = σ ; (g @ f) """
         post_twist = FinFun.Fun.twist(f.target, g.target)
         pre_twist = FinFun.Fun.twist(f.source, g.source)
 

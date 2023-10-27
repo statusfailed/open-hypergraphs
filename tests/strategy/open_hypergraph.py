@@ -9,8 +9,8 @@ class OpenHypergraphStrategies:
     
     @classmethod
     @st.composite
-    def arrows(draw, cls):
-        [H] = draw(Hyp.objects(n=1))
+    def arrows(draw, cls, labels=Random):
+        [H] = draw(Hyp.objects(n=1, labels=labels))
 
         num_sources, _ = draw(FinFun.arrow_type(target=H.W))
         num_targets, _ = draw(FinFun.arrow_type(target=H.W))
@@ -28,11 +28,11 @@ class OpenHypergraphStrategies:
 
     @classmethod
     @st.composite
-    def composite_arrows(draw, cls, n=2):
+    def composite_arrows(draw, cls, n=2, labels=Random):
         if n == 0:
             return []
 
-        arrows = [draw(cls.arrows())]
+        arrows = [draw(cls.arrows(labels=labels))]
 
         for i in range(1, n):
             f = arrows[i-1]
@@ -49,3 +49,23 @@ class OpenHypergraphStrategies:
             arrows.append(cls.OpenHypergraph(s, t, H))
 
         return arrows
+
+    @classmethod
+    @st.composite
+    def spiders(draw, cls, labels=Random):
+        w, x = labels if labels is not Random else draw(Hyp.labels())
+        s = draw(FinFun.arrows(target=w.source))
+        t = draw(FinFun.arrows(target=w.source))
+        return cls.OpenHypergraph.spider(s, t, w, x.to_initial())
+
+    @classmethod
+    @st.composite
+    def singletons(draw, cls, labels=Random):
+        w, x = labels if labels is not Random else draw(Hyp.labels())
+        # Bit of a hack; we'll always need at least one label.
+        if x.target == 0:
+            x.target = 1
+        x = draw(FinFun.arrows(source=1, target=x.target))
+        a = draw(FinFun.arrows(target=w.source))
+        b = draw(FinFun.arrows(target=w.source))
+        return cls.OpenHypergraph.singleton(a, b, x)
