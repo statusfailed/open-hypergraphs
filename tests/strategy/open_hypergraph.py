@@ -68,4 +68,4 @@ class OpenHypergraphStrategies:
         x = draw(FinFun.arrows(source=1, target=x.target))
         a = draw(FinFun.arrows(target=w.source))
         b = draw(FinFun.arrows(target=w.source))
-        return cls.OpenHypergraph.singleton(a, b, x)
+        return cls.OpenHypergraph.singleton(x, a, b)

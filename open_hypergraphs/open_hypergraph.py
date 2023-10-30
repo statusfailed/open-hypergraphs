@@ -18,6 +18,9 @@ class OpenHypergraph(HasHypergraph):
     def target(self):
         return self.t >> self.H.w
 
+    def signature(self):
+        return self.H.w.to_initial(), self.H.x.to_initial()
+
     @classmethod
     def identity(cls, w, x, dtype=DTYPE):
         if x.source != 0:
@@ -91,7 +94,7 @@ class OpenHypergraph(HasHypergraph):
         return cls.spider(s, t, w, x, dtype)
 
     @classmethod
-    def singleton(cls, a: FiniteFunction, b: FiniteFunction, x: FiniteFunction) -> 'OpenHypergraph':
+    def singleton(cls, x: FiniteFunction, a: FiniteFunction, b: FiniteFunction) -> 'OpenHypergraph':
         """ Given FiniteFunctions ``a : A → Σ₀`` and ``b : B → Σ₀`` and an
         operation ``x : 1 → Σ₁``, create an open hypergraph with a single
         operation ``x`` with type ``A → B``. """
@@ -113,6 +116,31 @@ class OpenHypergraph(HasHypergraph):
 
     ##############################
     # List operations
+
+    @classmethod
+    def tensor_operations(cls, x: FiniteFunction, a: IndexedCoproduct, b: IndexedCoproduct) -> 'OpenHypergraph':
+        """ The N-fold tensoring of operations ``x``. Like 'singleton' but for many operations.
+
+            x : N → Σ₁
+            a : N → Σ₀*
+            b : N → Σ₀*
+        """
+        if b.values.target != a.values.target or b.values.table.dtype != a.values.table.dtype:
+            raise ValueError("a and b must have the same target and dtype")
+        w = a.values.to_initial()
+
+        if len(x) != len(a) or len(x) != len(b):
+            raise ValueError("must have len(x) == len(a) == len(b)")
+
+        s = cls.FiniteFunction().inj0(len(a.values), len(b.values))
+        t = cls.FiniteFunction().inj1(len(a.values), len(b.values))
+        H = cls.Hypergraph()(
+            s = cls.IndexedCoproduct()(sources=a.sources, values=s),
+            t = cls.IndexedCoproduct()(sources=b.sources, values=t),
+            w = a.values + b.values,
+            x = x)
+
+        return cls(s, t, H)
 
     @classmethod
     def tensor_list(cls, ds: List['OpenHypergraph'], wn=None, xn=None) -> 'OpenHypergraph':

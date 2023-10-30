@@ -322,9 +322,15 @@ class FiniteFunction(ABC):
     @classmethod
     def singleton(cls, x: int, b: int | None, dtype=DTYPE) -> 'FiniteFunction':
         """ return the singleton array ``[x]`` whose domain is ``b``. """
+        return cls.constant(x, 1, b, dtype)
+
+    @classmethod
+    def constant(cls, x: int, a: int, b: int  | None, dtype=DTYPE) -> 'FiniteFunction':
+        """ ``constant(x, a, b)`` is the constant function of type ``a → b``
+        mapping all inputs to the value ``x``. """
         if type(b) is int and x >= b:
             raise ValueError(f"{x} is not an element of the set {{0..{b}}}")
-        return cls(b, cls.Array.full(1, x, dtype=dtype))
+        return cls(b, cls.Array.full(a, x, dtype=dtype))
 
     ################################################################################
     # Sorting morphisms
@@ -474,7 +480,16 @@ class IndexedCoproduct(HasFiniteFunction):
 
     @classmethod
     def singleton(cls, values: FiniteFunction) -> 'IndexedCoproduct':
+        """ Turn a :py:class:`FiniteFunction` ``f : A → B`` into an :py:class:`IndexedCoproduct`
+        `` Σ_{x ∈ 1} f : A → B """
         sources = cls.FiniteFunction().singleton(len(values), None)
+        return cls(sources, values)
+
+    @classmethod
+    def elements(cls, values: FiniteFunction, dtype=DTYPE) -> 'IndexedCoproduct':
+        """ Turn a :py:class:`FiniteFunction` ``f : A → B`` into an :py:class:`IndexedCoproduct`
+        `` Σ_{a ∈ A} f_a : A → B """
+        sources = cls.FiniteFunction().constant(1, len(values), None, dtype)
         return cls(sources, values)
 
     @property

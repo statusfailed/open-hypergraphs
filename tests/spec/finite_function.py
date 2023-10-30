@@ -4,6 +4,7 @@ import hypothesis.strategies as st
 from tests.strategy.finite_function import FiniteFunctionStrategies as FinFun
 
 from open_hypergraphs.finite_function import FiniteFunction, IndexedCoproduct
+from open_hypergraphs.open_hypergraph import OpenHypergraph
 
 class FiniteFunctionSpec:
 
@@ -154,6 +155,18 @@ class FiniteFunctionSpec:
 
     ############################################################################
     # Finite (indexed) coproducts
+
+    @given(FinFun.arrows())
+    def test_indexed_coproduct_singleton(self, f):
+        s = FinFun.IndexedCoproduct.singleton(f)
+        assert len(s) == 1
+        assert s.values == f
+
+    @given(FinFun.arrows())
+    def test_indexed_coproduct_elements(self, f: FiniteFunction):
+        s = FinFun.IndexedCoproduct.elements(f)
+        assert len(s) == len(f)
+        assert s.values == f
 
     @given(s=FinFun.arrows())
     def test_injection_coproduct_identity(self, s: FiniteFunction):

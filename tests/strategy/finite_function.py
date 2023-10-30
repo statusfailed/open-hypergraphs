@@ -151,7 +151,7 @@ class FiniteFunctionStrategies:
     @st.composite
     def indexed_coproducts(draw, cls, n=Random, target=Random):
         if n is Random:
-            n = draw(cls.coproduct_indexes()) + 1
+            n = draw(cls.coproduct_indexes())
 
         # IndexedCoproduct(s, v)
         #   s : N → Inf

@@ -153,3 +153,35 @@ class OpenHypergraphSpec:
 
         # check number of wires equal to arity + coarity
         assert f.H.W == len(f.source + f.target)
+
+    @given(Hyp.objects())
+    def test_tensor_operations(self, H):
+        # NOTE: we use a random hypergraph, then tensor together all its operations!
+        H = H[0]
+        x = H.x
+        a = H.s.map_values(H.w)
+        b = H.t.map_values(H.w)
+        f = OpenHyp.OpenHypergraph.tensor_operations(x, a, b)
+        assert len(f.H.x) == len(H.x)
+        assert len(f.s) == len(H.s.values)
+        assert len(f.t) == len(H.t.values)
+
+    @given(Hyp.objects())
+    def test_tensor_operations_equivalent_to_singletons(self, H):
+        H = H[0]
+        x = H.x
+        a = H.s.map_values(H.w)
+        b = H.t.map_values(H.w)
+        OpenHypergraph = OpenHyp.OpenHypergraph
+
+        # The direct tensor of operations...
+        f = OpenHypergraph.tensor_operations(x, a, b)
+
+        # and the explicit n-fold tensoring...
+        g = OpenHypergraph.unit(*f.signature())
+        x_ = OpenHypergraph.IndexedCoproduct().elements(x) # treat x : A → B as a coproduct of elements 1 → B
+        for xi, ai, bi in zip(x_, a, b):
+            g = g @ OpenHyp.OpenHypergraph.singleton(xi, ai, bi)
+
+        # ... are isomorphic.
+        _assert_equality_invariants(f, g)
