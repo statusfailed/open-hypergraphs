@@ -36,12 +36,12 @@ class FiniteFunctionSpec:
     @given(FinFun.arrows())
     def test_category_identity_left(self, f):
         """ ``id ; f = f`` """
-        FinFun.Fun.identity(f.source) >> f == f
+        FinFun.FiniteFunction.identity(f.source) >> f == f
 
     @given(FinFun.arrows())
     def test_category_identity_right(self, f):
         """ ``f ; id = f`` """
-        f >> FinFun.Fun.identity(f.target) == f
+        f >> FinFun.FiniteFunction.identity(f.target) == f
 
     @given(FinFun.composite_arrows(n=3))
     def test_category_composition_associative(self, fgh):
@@ -56,28 +56,28 @@ class FiniteFunctionSpec:
     # any map f : 0 → B is equal to the initial map ? : 0 → B
     @given(FinFun.arrows(source=0))
     def test_initial_map_unique(self, f):
-        assert f == FinFun.Fun.initial(f.target)
+        assert f == FinFun.FiniteFunction.initial(f.target)
 
     @given(FinFun.arrows())
     def test_to_initial(self, f):
-        assert f.to_initial() == FinFun.Fun.initial(f.target)
+        assert f.to_initial() == FinFun.FiniteFunction.initial(f.target)
 
     @given(FinFun.indexed_coproducts(n=2))
     def test_coproduct_diagram_commutes(self, c: IndexedCoproduct):
         f, g = c # note: this uses the IndexedCoproduct's __iter__ to unpack
-        i0 = FinFun.Fun.inj0(f.source, g.source)
-        i1 = FinFun.Fun.inj1(f.source, g.source)
+        i0 = FinFun.FiniteFunction.inj0(f.source, g.source)
+        i1 = FinFun.FiniteFunction.inj1(f.source, g.source)
 
         assert (i0 >> (f + g)) == f
         assert (i1 >> (f + g)) == g
 
     @given(f=FinFun.arrows(), b=FinFun.objects())
     def test_f_cp_inj0_equals_inject0(self, f, b):
-        assert f >> FinFun.Fun.inj0(f.target, b) == f.inject0(b)
+        assert f >> FinFun.FiniteFunction.inj0(f.target, b) == f.inject0(b)
 
     @given(f=FinFun.arrows(), a=FinFun.objects())
     def test_f_cp_inj1_equals_inject1(self, f, a):
-        assert f >> FinFun.Fun.inj1(a, f.target) == f.inject1(a)
+        assert f >> FinFun.FiniteFunction.inj1(a, f.target) == f.inject1(a)
 
     ############################################################################
     # Strict symmetric monoidal properties
@@ -86,26 +86,26 @@ class FiniteFunctionSpec:
     def test_tensor_vs_injections(self, f, g):
         """ Verify that the tensor product of arrows corresponds to its
         definition in terms of coproducts and injections """
-        i0 = FinFun.Fun.inj0(f.target, g.target)
-        i1 = FinFun.Fun.inj1(f.target, g.target)
+        i0 = FinFun.FiniteFunction.inj0(f.target, g.target)
+        i1 = FinFun.FiniteFunction.inj1(f.target, g.target)
 
         assert f @ g == (f >> i0) + (g >> i1)
 
     @given(a=FinFun.objects(), b=FinFun.objects())
     def test_twist_inverse(self, a, b):
         """ Verify that σ ; σ = id """
-        f = FinFun.Fun.twist(a, b)
-        g = FinFun.Fun.twist(b, a)
+        f = FinFun.FiniteFunction.twist(a, b)
+        g = FinFun.FiniteFunction.twist(b, a)
 
-        identity = FinFun.Fun.identity(a+b)
+        identity = FinFun.FiniteFunction.identity(a+b)
         assert f >> g == identity
         assert g >> f == identity
 
     @given(f=FinFun.arrows(), g=FinFun.arrows())
     def test_twist_naturality(self, f, g):
         """ Check naturality of σ, so that (f @ g) ; σ = σ ; (g @ f) """
-        post_twist = FinFun.Fun.twist(f.target, g.target)
-        pre_twist = FinFun.Fun.twist(f.source, g.source)
+        post_twist = FinFun.FiniteFunction.twist(f.target, g.target)
+        pre_twist = FinFun.FiniteFunction.twist(f.source, g.source)
 
         assert ((f @ g) >> post_twist) == (pre_twist >> (g @ f))
 
@@ -173,9 +173,9 @@ class FiniteFunctionSpec:
         """ Test that the (finite) coproduct of injections is the identity
             ι_0 + ι_1 + ... + ι_N = identity(sum_{i ∈ N} s(i))
         """
-        i = FinFun.Fun.identity(s.source)
-        n = FinFun.Fun.Array.sum(s.table)
-        assert s.injections(i) == FinFun.Fun.identity(n)
+        i = FinFun.FiniteFunction.identity(s.source)
+        n = FinFun.FiniteFunction.Array.sum(s.table)
+        assert s.injections(i) == FinFun.FiniteFunction.identity(n)
 
     @given(FinFun.indexed_coproducts())
     def test_indexed_coproduct_roundtrip(self, c):
@@ -192,8 +192,8 @@ class FiniteFunctionSpec:
         target = c.values.target
         fs = list(c)
 
-        expected_sources = FinFun.Fun(None, [len(fs[x(i)]) for i in range(0, x.source)] )
-        expected_values   = FinFun.Fun.coproduct_list([ fs[x(i)] for i in range(0, x.source) ], target=target)
+        expected_sources = FinFun.FiniteFunction(None, [len(fs[x(i)]) for i in range(0, x.source)] )
+        expected_values  = FinFun.FiniteFunction.coproduct_list([ fs[x(i)] for i in range(0, x.source) ], target=target)
 
         assert len(c) == len(fs)
 

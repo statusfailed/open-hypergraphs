@@ -76,8 +76,8 @@ class HypergraphStrategies:
         return HypergraphArrow(
             source=G,
             target=H,
-            w=FinFun.Fun.inj0(G.W, H.W - G.W, dtype),
-            x=FinFun.Fun.inj0(G.X, H.X - G.X, dtype))
+            w=FinFun.FiniteFunction.inj0(G.W, H.W - G.W, dtype),
+            x=FinFun.FiniteFunction.inj0(G.X, H.X - G.X, dtype))
 
     # Draw a span of hypergraphs
     #     l   r

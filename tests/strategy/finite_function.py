@@ -84,7 +84,7 @@ class FiniteFunctionStrategies:
             # NOTE: set high to MAX_OBJECT if non-finite.
             high = cls.MAX_OBJECT if target is None else target
             table = draw(cls.arrays(n=source, high=high, dtype=cls.DEFAULT_DTYPE))
-        return cls.Fun(target, table)
+        return cls.FiniteFunction(target, table)
 
     @classmethod
     @st.composite
@@ -93,7 +93,7 @@ class FiniteFunctionStrategies:
             target = draw(cls.objects())
 
         table = draw(cls.permutation_arrays(n=target, dtype=cls.DEFAULT_DTYPE))
-        return cls.Fun(target, table)
+        return cls.FiniteFunction(target, table)
 
     @classmethod
     @st.composite
@@ -162,10 +162,10 @@ class FiniteFunctionStrategies:
         sources.target = None # NOTE: need sources to be non-finite codomain.
 
         # sum of sources is the source of the values array
-        source = cls.Fun.Array.sum(sources.table)
+        source = cls.FiniteFunction.Array.sum(sources.table)
         _, target = draw(cls.arrow_type(source=source, target=target))
         values = draw(cls.arrows(
-            source=cls.Fun.Array.sum(sources.table),
+            source=cls.FiniteFunction.Array.sum(sources.table),
             target=target))
 
         return cls.IndexedCoproduct(sources=sources, values=values)
