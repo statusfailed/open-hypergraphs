@@ -173,7 +173,7 @@ class FiniteFunctionSpec:
         """ Test that the (finite) coproduct of injections is the identity
             ι_0 + ι_1 + ... + ι_N = identity(sum_{i ∈ N} s(i))
         """
-        i = FinFun.FiniteFunction.identity(s.source)
+        i = FinFun.FiniteFunction.identity(s.source, dtype=s.table.dtype)
         n = FinFun.FiniteFunction.Array.sum(s.table)
         assert s.injections(i) == FinFun.FiniteFunction.identity(n)
 

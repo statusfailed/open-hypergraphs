@@ -424,10 +424,14 @@ class FiniteFunction(ABC):
         sizes equal to s.
         """
         # segment pointers
+        if s.table.dtype != a.table.dtype:
+            raise ValueError(f"s and a must have the same dtype, but got {s.table.dtype} and {a.table.dtype}")
+
         Array = a.Array
+        dtype = a.table.dtype
 
         # cumsum is inclusive, we need exclusive so we just allocate 1 more space.
-        p = Array.zeros(s.source + 1, dtype=Array.DEFAULT_DTYPE)
+        p = Array.zeros(s.source + 1, dtype=dtype)
         p[1:] = Array.cumsum(s.table)
 
         k = a >> s # avoid recomputation
@@ -489,7 +493,7 @@ class IndexedCoproduct(HasFiniteFunction):
     def elements(cls, values: FiniteFunction, dtype=DTYPE) -> 'IndexedCoproduct':
         """ Turn a :py:class:`FiniteFunction` ``f : A → B`` into an :py:class:`IndexedCoproduct`
         `` Σ_{a ∈ A} f_a : A → B """
-        sources = cls.FiniteFunction().constant(1, len(values), None, dtype)
+        sources = cls.FiniteFunction().constant(1, len(values), None, dtype=dtype)
         return cls(sources, values)
 
     @property

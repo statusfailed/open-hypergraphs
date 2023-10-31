@@ -84,12 +84,14 @@ class OpenHypergraph(HasHypergraph):
         return type(self)(self.t, self.s, self.H)
 
     @classmethod
-    def spider(cls, s: FiniteFunction, t: FiniteFunction, w: FiniteFunction, x: FiniteFunction, dtype=DTYPE) -> 'OpenHypergraph':
+    def spider(cls, s: FiniteFunction, t: FiniteFunction, w: FiniteFunction, x: FiniteFunction, dtype=None) -> 'OpenHypergraph':
+        dtype = dtype or s.table.dtype
         H = cls.Hypergraph().discrete(w, x, dtype=dtype)
         return cls(s, t, H)
 
     @classmethod
-    def half_spider(cls, s: FiniteFunction, w: FiniteFunction, x: FiniteFunction, dtype=DTYPE) -> 'OpenHypergraph':
+    def half_spider(cls, s: FiniteFunction, w: FiniteFunction, x: FiniteFunction, dtype=None) -> 'OpenHypergraph':
+        dtype = dtype or s.table.dtype
         t = cls.FiniteFunction().identity(len(w))
         return cls.spider(s, t, w, x, dtype)
 
@@ -145,3 +147,13 @@ class OpenHypergraph(HasHypergraph):
     @classmethod
     def tensor_list(cls, ds: List['OpenHypergraph'], wn=None, xn=None) -> 'OpenHypergraph':
         raise NotImplementedError("TODO")
+
+class HasOpenHypergraph(HasHypergraph):
+    @classmethod
+    @abstractmethod
+    def OpenHypergraph(cls) -> Type[OpenHypergraph]:
+        ...
+
+    @classmethod
+    def Hypergraph(cls) -> Type[Hypergraph]:
+        return cls.OpenHypergraph().Hypergraph()

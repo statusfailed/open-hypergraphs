@@ -1,7 +1,10 @@
 from typing import Type
+from abc import ABC
+
 import open_hypergraphs.finite_function as f
 import open_hypergraphs.hypergraph as h
 import open_hypergraphs.open_hypergraph as o
+import open_hypergraphs.functor as functor
 
 from open_hypergraphs.array.numpy import NumpyBackend
 
@@ -22,3 +25,15 @@ class OpenHypergraph(o.OpenHypergraph):
     @classmethod
     def Hypergraph(cls) -> Type[h.Hypergraph]:
         return Hypergraph
+
+class Functor(functor.Functor):
+    @classmethod
+    def OpenHypergraph(cls) -> Type[o.OpenHypergraph]:
+        return OpenHypergraph
+
+# NOTE: have to inherit from FrobeniusFunctor to make method resolution work,
+# but that means supplying OpenHypergraph method!
+class FrobeniusFunctor(functor.FrobeniusFunctor):
+    @classmethod
+    def OpenHypergraph(cls) -> Type[o.OpenHypergraph]:
+        return OpenHypergraph

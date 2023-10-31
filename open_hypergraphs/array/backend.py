@@ -67,7 +67,7 @@ class ArrayBackend(Protocol[A]):
         ...
 
     @classmethod
-    def repeat(cls, x: A, repeats: A) -> A:
+    def repeat(cls, x: A, repeats: A, dtype: Any = None) -> A:
         ...
 
     @classmethod
@@ -124,7 +124,7 @@ class ArrayBackend(Protocol[A]):
 
             segmented array with segment ``i`` equal to ``arange(i)``.
         """
-        x = cls.array(x, dtype=cls.DEFAULT_DTYPE)
+        x = cls.array(x, dtype=x.dtype)
 
         # create segment pointer array
         ptr = cls.zeros(len(x) + 1, dtype=x.dtype) # O(1) PRAM
@@ -132,4 +132,5 @@ class ArrayBackend(Protocol[A]):
         N = ptr[-1] # total size
 
         r = cls.repeat(ptr[:-1], x) # O(log x) PRAM
-        return cls.arange(0, N) - r # O(1)     PRAM
+        result = cls.arange(0, N, x.dtype) - r # O(1)     PRAM
+        return result
