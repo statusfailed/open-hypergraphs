@@ -201,3 +201,33 @@ class FiniteFunctionSpec:
         assert len(d) == len(x)
         assert d.sources == expected_sources
         assert d.values == expected_values
+
+    ##########################################################################
+    # Useful permutations
+
+    @given(st.integers(min_value=0, max_value=64), st.integers(min_value=0, max_value=64))
+    def test_transpose_inverse(self, a: int, b: int):
+        f = FinFun.FiniteFunction.transpose(a, b)
+        g = FinFun.FiniteFunction.transpose(b, a)
+        id = FinFun.FiniteFunction.identity(b * a)
+        assert f >> g == id
+
+    # NOTE: the below test passes, but hardcodes an array backend (numpy).
+    # @given(st.integers(min_value=0, max_value=64), st.integers(min_value=0, max_value=64))
+    # def test_transpose_numpy(self, a: int, b: int):
+        # import numpy as np # bad! this is parametrised over backend!
+        # # If we index using FiniteFunction.transpose.table,
+        # # is that the same as computing the transpose?
+        # M = np.arange(b*a).reshape(b, a)
+        # ixs = FinFun.FiniteFunction.transpose(a, b).table
+
+        # # This says that the values of M are the same as the transposed values
+        # # at indexes ixs
+        # assert np.all(M.flat == M.T.flat[ixs])
+
+        # # Or we can check this in a more natural way:
+        # # NOTE: N is an  a×b  matrix!
+        # N = np.zeros((a, b), int)
+        # # Computing the permutation M.T is just setting the indexes of N at ixs to the values of M.
+        # N.flat[ixs] = M.flat
+        # assert np.all(M.T == N)

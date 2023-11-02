@@ -345,24 +345,26 @@ class FiniteFunction(ABC):
     ################################################################################
     # Useful permutations
 
-    # Given generating objects A_i and B_i for i ∈ ord{n},
-    #   interleave : (A₀ ● A₁ ● ... ● An) ● (B₀ ● B₁ ● ... ● Bn) → (A₀ ● B₀) ● .. ● (An ● Bn)
     @classmethod
-    def interleave(cls, N: int) -> 'FiniteFunction':
-        table = cls.Array.zeros(2*N, dtype=int)
-        table[0:N] = cls.Array.arange(0, N)*2
-        table[N:] = table[0:N] + 1
-        return cls(2*N, table)
+    def transpose(cls, a: int, b: int, dtype=DTYPE) -> 'FiniteFunction':
+        """ ``transpose(a, b)`` is the "transposition permutation" for an ``a → b`` matrix.
 
-    # Given generating objects A_i and B_i for i ∈ ord{n},
-    #   cointerleave : (A₀ ● B₀) ● .. ● (An ● Bn) → (A₀ ● A₁ ● ... ● An) ● (B₀ ● B₁ ● ... ● Bn)
-    @classmethod
-    def cointerleave(cls, N) -> 'FiniteFunction':
-        table = cls.Array.zeros(2*N, dtype=int)
-        table[0::2] = cls.Array.arange(0, N)
-        table[1::2] = table[0::2] + N
-        return cls(2*N, table)
-
+        Given an ``b*a``-dimensional input thought of as a matrix in row-major
+        order with ``b`` rows and ``a`` columns,
+        ``transpose(a, b)`` computes the "target indices" in the transpose.
+        So if we have a matrix ``M : A → B``
+        and a matrix ``N : B → A``,
+        then setting indexes ``N[transpose(a, b)] = M`` is the same as writing
+        ``N = M.T``
+        """
+        table = cls.Array.zeros(b*a, dtype=dtype)
+        i = cls.Array.arange(0, b*a)
+        # TODO: this can be done without arithmetic operators; but is it faster?
+        # A quick sketch of how:
+        # repeating the vector (0, m, 2m, ... nm) and adding with (0 0 0 ... 1 1 1 ... 2 2 2 ... )
+        #   something like this: repeat(m * range(n), n) + repeat(n, range(m))
+        table[i] = (i % a) * b + i // a
+        return cls(b*a, table)
 
     ################################################################################
     # Sequential-only methods
