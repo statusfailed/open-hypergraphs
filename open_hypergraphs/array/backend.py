@@ -134,3 +134,12 @@ class ArrayBackend(Protocol[A]):
         r = cls.repeat(ptr[:-1], x) # O(log x) PRAM
         result = cls.arange(0, N, x.dtype) - r # O(1)     PRAM
         return result
+
+    @classmethod
+    def segmented_sum(cls, s: A, x: A) -> A:
+        # O(log n) PRAM CREW, O(n) sequential
+        ptr = cls.zeros(len(s)+1, dtype=s.dtype)
+        ptr[1:] = cls.cumsum(s)
+        sums = cls.zeros(len(x)+1, dtype=x.dtype)
+        sums[1:] = cls.cumsum(x)
+        return sums[ptr[1:]] - sums[ptr[:-1]]
