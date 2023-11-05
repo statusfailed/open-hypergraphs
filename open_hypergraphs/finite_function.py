@@ -584,6 +584,22 @@ class IndexedCoproduct(HasFiniteFunction):
             sources = x >> self.sources,
             values = self.indexed_values(x))
 
+    def flatmap(x, y: 'IndexedCoproduct') -> 'IndexedCoproduct':
+        """ Compose two IndexedCoproducts. """
+        # TODO: docstring!
+        #
+        #   x : Σ_{a ∈ A} s(a) → B      #   aka A → B*
+        #   y : Σ_{b ∈ B} s(b) → C      #   aka B → C*
+        #   z : Σ_{a ∈ A} s'(a) → C      #   aka A → C*
+        #
+        # TODO: be explicit that s'(a) = Σ_{b ∈ B} s(b) ... ?
+        assert len(x.values) == len(y)
+
+        # segmented sum of x.sources
+        return type(x)(
+            sources = x.FiniteFunction()(None, x.FiniteFunction().Array.segmented_sum(x.sources.table, y.sources.table)),
+            values  = y.values)
+
 class HasIndexedCoproduct(HasFiniteFunction):
     """ Classes which have a chosen indexed coproduct implementation """
     @classmethod

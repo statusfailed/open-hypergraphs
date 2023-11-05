@@ -172,6 +172,13 @@ class FiniteFunctionStrategies:
 
     @classmethod
     @st.composite
+    def composable_indexed_coproducts(draw, cls, n=Random, target=Random):
+        x = draw(cls.indexed_coproducts(n=n, target=target))
+        y = draw(cls.indexed_coproducts(n=len(x.values)))
+        return x, y
+
+    @classmethod
+    @st.composite
     def map_with_indexed_coproducts(draw, cls, n=Random, target=Random):
         # c : Σ_{i ∈ N} f_i → s(f_i) → T
         c = draw(cls.indexed_coproducts(n=n, target=target))

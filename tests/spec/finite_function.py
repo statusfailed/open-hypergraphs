@@ -202,6 +202,18 @@ class FiniteFunctionSpec:
         assert d.sources == expected_sources
         assert d.values == expected_values
 
+    @given(FinFun.composable_indexed_coproducts())
+    def test_indexed_coproduct_flatmap(self, xy):
+        x, y = xy
+        actual = x.flatmap(y)
+
+        expected_sources = x.sources
+
+        # The number of segments is that of x...
+        assert len(actual) == len(x)
+        # but total segment *sizes* is from y.
+        assert len(actual.values) == len(y.values)
+
     ##########################################################################
     # Useful permutations
 
