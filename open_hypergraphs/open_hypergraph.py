@@ -96,9 +96,8 @@ class OpenHypergraph(HasHypergraph):
 
     @classmethod
     def half_spider(cls, s: FiniteFunction, w: FiniteFunction, x: FiniteFunction) -> 'OpenHypergraph':
-        dtype = dtype or s.table.dtype
         t = cls.FiniteFunction().identity(len(w))
-        return cls.spider(s, t, w, x, dtype)
+        return cls.spider(s, t, w, x)
 
     @classmethod
     def singleton(cls, x: FiniteFunction, a: FiniteFunction, b: FiniteFunction) -> 'OpenHypergraph':

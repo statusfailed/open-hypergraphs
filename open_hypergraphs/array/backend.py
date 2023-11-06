@@ -69,14 +69,14 @@ class ArrayBackend(Protocol[A]):
         ...
 
     @classmethod
-    def concatenate(cls, x: List[A]) -> A:
+    def concatenate(cls, x: List[A], dtype: Any) -> A:
         ...
 
     ########################################
     # connected components
 
     @classmethod
-    def connected_components(cls, self: A, other: A, m: int) -> Tuple[int, A]:
+    def connected_components(cls, self: A, other: A, m: int, dtype: Any) -> Tuple[int, A]:
         ...
 
     ########################################

@@ -8,6 +8,7 @@ The only exceptions are:
 This module is the default array backend.
 It's used by :py:class:`FiniteFunction`.
 """
+from typing import List
 import numpy as np
 import scipy.sparse as sparse
 
@@ -63,8 +64,8 @@ class NumpyBackend(ArrayBackend):
         return np.repeat(*args, **kwargs)
 
     @classmethod
-    def concatenate(cls, *args, **kwargs):
-        return np.concatenate(*args, **kwargs)
+    def concatenate(cls, x: List[np.ndarray], dtype):
+        return np.concatenate(x, dtype=dtype)
 
     ########################################
     # Utilities

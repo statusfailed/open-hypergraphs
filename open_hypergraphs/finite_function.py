@@ -52,7 +52,7 @@ class FiniteFunction(ABC):
     For example, cls.Array.sum() should compute the sum of an array.
     """
     # These are class properties, set by concrete implementations (inheriting classes).
-    FiniteDtype: Any
+    Dtype: Any
     Array: Type[ArrayBackend]
 
     # the actual data of the FiniteFunction.
@@ -217,7 +217,7 @@ class FiniteFunction(ABC):
         assert f.target == g.target
         assert f.table.dtype == g.table.dtype
         target = f.target
-        table = type(f).Array.concatenate([f.table, g.table])
+        table = type(f).Array.concatenate([f.table, g.table], f.dtype)
         return type(f)(target, table)
 
     def __add__(f: 'FiniteFunction', g: 'FiniteFunction') -> 'FiniteFunction':
@@ -244,7 +244,7 @@ class FiniteFunction(ABC):
         if g.target is None:
             raise f._nonfinite_target()
         T = type(f)
-        table = T.Array.concatenate([f.table, g.table + f.target])
+        table = T.Array.concatenate([f.table, g.table + f.target], f.Dtype)
         return T(f.target + g.target, table)
 
     def __matmul__(f: 'FiniteFunction', g: 'FiniteFunction') -> 'FiniteFunction':
@@ -388,7 +388,7 @@ class FiniteFunction(ABC):
 
         # all targets must be equal
         assert all(f.target == g.target for f, g in zip(fs, fs[:1]))
-        return cls(fs[0].target, cls.Array.concatenate([f.table for f in fs]))
+        return cls(fs[0].target, cls.Array.concatenate([f.table for f in fs], cls.Dtype))
 
     @classmethod
     def tensor_list(cls, fs: List['FiniteFunction']):
@@ -400,10 +400,10 @@ class FiniteFunction(ABC):
         if len(fs) == 0:
             return cls.initial(0)
 
-        targets = cls.Array.array([f.target for f in fs])
+        targets = cls.Array.array([f.target for f in fs], cls.Dtype)
         offsets = cls.Array.zeros(len(targets) + 1, dtype=cls.Dtype)
         offsets[1:] = cls.Array.cumsum(targets) # exclusive scan
-        table = cls.Array.concatenate([f.table + offset for f, offset in zip(fs, offsets[:-1])])
+        table = cls.Array.concatenate([f.table + offset for f, offset in zip(fs, offsets[:-1])], cls.Dtype)
         return cls(offsets[-1], table)
 
 
