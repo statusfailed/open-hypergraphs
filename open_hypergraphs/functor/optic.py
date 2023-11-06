@@ -18,18 +18,18 @@ class Optic(FrobeniusFunctor, ABC):
     def residual(self, x: FiniteFunction, a: IndexedCoproduct, b: IndexedCoproduct) -> IndexedCoproduct:
         ...
 
-    def map_objects(self, A: FiniteFunction, dtype) -> IndexedCoproduct:
+    def map_objects(self, A: FiniteFunction) -> IndexedCoproduct:
         # Each object A is mapped to F(A) ● R(A)
-        FA = self.F.map_objects(A, dtype)
-        RA = self.R.map_objects(A, dtype)
+        FA = self.F.map_objects(A)
+        RA = self.R.map_objects(A)
 
         assert len(FA) == len(RA)
         n = len(FA)
         paired = FA + RA
-        p = self.FiniteFunction().transpose(2, n, dtype=dtype)
+        p = self.FiniteFunction().transpose(2, n)
 
         # TODO: Exposing internals of FiniteFunction here isn't nice.
-        sources = self.FiniteFunction()(None, FA.sources.table + RA.sources.table, dtype)
+        sources = self.FiniteFunction()(None, FA.sources.table + RA.sources.table)
         values = paired.map_indexes(p).values
         return self.IndexedCoproduct()(sources, values)
 
@@ -41,13 +41,12 @@ class Optic(FrobeniusFunctor, ABC):
         rev = self.R.map_operations(x, A, B)
 
         cls = self.OpenHypergraph()
-        dtype = fwd.dtype
 
         # We'll need these types to build identities and interleavings
-        FA = self.F.map_objects(A.values, dtype)
-        FB = self.F.map_objects(B.values, dtype)
-        RA = self.R.map_objects(A.values, dtype)
-        RB = self.R.map_objects(B.values, dtype)
+        FA = self.F.map_objects(A.values)
+        FB = self.F.map_objects(B.values)
+        RA = self.R.map_objects(A.values)
+        RB = self.R.map_objects(B.values)
         M  = self.residual(x, A, B)
 
         # NOTE: we use flatmap here to ensure that each "block" of FB, which
@@ -59,8 +58,8 @@ class Optic(FrobeniusFunctor, ABC):
         assert fwd.target == fwd_interleave.source
         assert rev_cointerleave.target == rev.source
 
-        i_FB = self.OpenHypergraph().identity(FB.values, x.to_initial(), dtype=dtype)
-        i_RB = self.OpenHypergraph().identity(RB.values, x.to_initial(), dtype=dtype)
+        i_FB = self.OpenHypergraph().identity(FB.values, x.to_initial())
+        i_RB = self.OpenHypergraph().identity(RB.values, x.to_initial())
 
         # Make this diagram "c":
         #
@@ -100,9 +99,8 @@ class Optic(FrobeniusFunctor, ABC):
             raise ValueError("Can't interleave types of unequal lengths")
 
         AB = A + B
-        dtype = AB.dtype
 
-        s = self.FiniteFunction().identity(len(AB.values), dtype=dtype)
+        s = self.FiniteFunction().identity(len(AB.values))
         # NOTE: t is the dagger of transpose(N, 2) because it appears in the target position!
-        t = AB.sources.injections(self.FiniteFunction().transpose(2, len(A), dtype=dtype))
+        t = AB.sources.injections(self.FiniteFunction().transpose(2, len(A)))
         return self.OpenHypergraph().spider(s, t, AB.values, x)

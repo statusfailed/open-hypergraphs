@@ -23,7 +23,7 @@ class OpenHypergraphStrategies:
     @st.composite
     def identities(draw, cls):
         H = draw(Hyp.discrete())
-        s = t = FinFun.FiniteFunction.identity(len(H.w), dtype=H.dtype)
+        s = t = FinFun.FiniteFunction.identity(len(H.w))
         return cls.OpenHypergraph(s, t, H)
 
     @classmethod
@@ -39,7 +39,7 @@ class OpenHypergraphStrategies:
 
             # draw the left leg and apex of the cospan
             # A is the source object of the previous arrow.
-            A = Hyp.Hypergraph.discrete(f.target, f.H.x.to_initial(), dtype=f.target.table.dtype)
+            A = Hyp.Hypergraph.discrete(f.target, f.H.x.to_initial())
             α = draw(Hyp.inclusions(A))
             s, H = α.w, α.target
 

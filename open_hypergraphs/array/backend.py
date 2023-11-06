@@ -6,7 +6,6 @@ from collections.abc import MutableMapping
 
 # Arrays are (very) loosely typed
 class ArrayType(MutableMapping):
-    DEFAULT_DTYPE: Any
     dtype: Any
 
     def __sub__(self, other):
@@ -17,26 +16,25 @@ A = TypeVar('A', bound=ArrayType)
 # A generic array backend for arrays of type A.
 class ArrayBackend(Protocol[A]):
 
-    DEFAULT_DTYPE: Any
     Type: Type[A]
 
     # Construct an array from an iterable of elements.
     @classmethod
-    def array(cls, elems, dtype=None) -> A:
+    def array(cls, elems, dtype) -> A:
         ...
 
     ########################################
     # Constructors
     @classmethod
-    def arange(cls, start: int, stop: int, dtype=None) -> A:
+    def arange(cls, start: int, stop: int, dtype) -> A:
         ...
     
     @classmethod
-    def zeros(cls, n: int, dtype=None) -> A:
+    def zeros(cls, n: int, dtype) -> A:
         ...
 
     @classmethod
-    def ones(cls, n: int, dtype=None) -> A:
+    def ones(cls, n: int, dtype) -> A:
         ...
 
     ########################################
@@ -89,7 +87,7 @@ class ArrayBackend(Protocol[A]):
         ...
 
     @classmethod
-    def full(cls, n, x, dtype=None) -> A:
+    def full(cls, n, x, dtype) -> A:
         ...
 
     ########################################

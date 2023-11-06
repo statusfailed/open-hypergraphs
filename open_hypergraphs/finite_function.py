@@ -38,12 +38,10 @@ FiniteFunction(6, [0 1 2 3 4 5 5 5 5 5])
 
 from dataclasses import dataclass
 from abc import abstractmethod, ABC
-from typing import List, Type, Union
+from typing import List, Type, Union, Any
 from typing_extensions import Protocol
 
 from open_hypergraphs.array.backend import ArrayBackend, ArrayType
-
-DTYPE='int64'
 
 Target = Union[None, int]
 
@@ -53,32 +51,36 @@ class FiniteFunction(ABC):
     This implementation assumes there is a cls.Array member implementing various primitives.
     For example, cls.Array.sum() should compute the sum of an array.
     """
+    # These are class properties, set by concrete implementations (inheriting classes).
+    FiniteDtype: Any
     Array: Type[ArrayBackend]
+
+    # the actual data of the FiniteFunction.
     target: Target
 
-    def __init__(self, target, table, dtype=DTYPE):
-        # TODO: this constructor is too complicated; it should be simplified.
-        # Array is the "array functions module"
-        # It lets us parametrise FiniteFunction by a module like "numpy".
-        Array = type(self).Array
-        if type(table) == Array.Type:
-           self.table = table
-        else:
-            self.table = Array.array(table, dtype=dtype)
-
+    def __init__(self, target, table):
+        self.table = table
         self.target = target
 
-        assert len(self.table.shape) == 1 # ensure 1D array
-        assert self.source >= 0
+        if type(table) != self.Array.Type:
+            raise ValueError(f"table must be of type {self.Array.Type}")
+
+        if target is not None and table.dtype != self.Dtype:
+            raise ValueError(f"table.dtype must be {self.Dtype} for finite target")
+
+        if len(self.table.shape) != 1:
+            raise ValueError(f"table must be a 1D array, but had shape {self.table.shape}")
+
         if self.source > 0 and self.target is not None:
-            assert self.target >= 0
-            assert self.target > Array.max(table)
+            m = self.Array.max(table)
+            if self.target <= m:
+                raise ValueError(f"table max value must be less than target {self.target} but was {m}")
 
     def _nonfinite_target(self):
         return ValueError("FiniteFunction must have finite domain, but had target = {self.target}")
 
     @property
-    def dtype(self):
+    def dtype(self) -> Any:
         return self.table.dtype
 
     @property
@@ -116,7 +118,7 @@ class FiniteFunction(ABC):
     # FiniteFunction forms a category
 
     @classmethod
-    def identity(cls, n: int, dtype=DTYPE) -> 'FiniteFunction':
+    def identity(cls, n: int) -> 'FiniteFunction':
         """Return the identity finite function of type n → n.
         Args:
             n(int): The object of which to return the identity map
@@ -125,7 +127,7 @@ class FiniteFunction(ABC):
             FiniteFunction: Identity map at n
         """
         assert n >= 0
-        return cls(n, cls.Array.arange(0, n, dtype=dtype))
+        return cls(n, cls.Array.arange(0, n, dtype=cls.Dtype))
 
     # Compute (f ; g), i.e., the function x → g(f(x))
     def compose(f: 'FiniteFunction', g: 'FiniteFunction') -> 'FiniteFunction':
@@ -166,9 +168,9 @@ class FiniteFunction(ABC):
     ################################################################################
     # FiniteFunction has initial objects and coproducts
     @classmethod
-    def initial(cls, b: Target, dtype=DTYPE) -> 'FiniteFunction':
+    def initial(cls, b: Target, dtype=None) -> 'FiniteFunction':
         """Compute the initial map ``? : 0 → b``"""
-        return cls(b, cls.Array.zeros(0, dtype=dtype))
+        return cls(b, cls.Array.zeros(0, dtype=dtype or cls.Dtype))
 
     def to_initial(self) -> 'FiniteFunction':
         """ Turn a finite function ``f : A → B`` into the initial map ``? : 0 → B``.
@@ -178,15 +180,15 @@ class FiniteFunction(ABC):
         return type(self).initial(self.target, dtype=self.table.dtype)
 
     @classmethod
-    def inj0(cls, a: int, b: int, dtype=DTYPE) -> 'FiniteFunction':
+    def inj0(cls, a: int, b: int) -> 'FiniteFunction':
         """Compute the injection ``ι₀ : a → a + b``"""
-        table = cls.Array.arange(0, a, dtype=dtype)
+        table = cls.Array.arange(0, a, dtype=cls.Dtype)
         return cls(a + b, table)
 
     @classmethod
-    def inj1(cls, a: int, b: int, dtype=DTYPE) -> 'FiniteFunction':
+    def inj1(cls, a: int, b: int) -> 'FiniteFunction':
         """Compute the injection ``ι₁ : b → a + b``"""
-        table = cls.Array.arange(a, a + b, dtype=dtype)
+        table = cls.Array.arange(a, a + b, dtype=cls.Dtype)
         return cls(a + b, table)
 
     def inject0(f: 'FiniteFunction', b: int) -> 'FiniteFunction':
@@ -249,13 +251,13 @@ class FiniteFunction(ABC):
         return f.tensor(g)
 
     @classmethod
-    def twist(cls, a: int, b: int, dtype=DTYPE) -> 'FiniteFunction':
+    def twist(cls, a: int, b: int) -> 'FiniteFunction':
         # Read a permutation as the array whose ith position denotes "where to send" value i.
         # e.g., twist_{2, 3} = [3 4 0 1 2]
         #       twist_{2, 1} = [1 2 0]
         #       twist_{0, 2} = [0 1]
-        table = cls.Array.concatenate([b + cls.Array.arange(0, a), cls.Array.arange(0, b)])
-        return cls(a + b, table.astype(dtype))
+        table = cls.Array.concatenate([b + cls.Array.arange(0, a, cls.Dtype), cls.Array.arange(0, b, cls.Dtype)], dtype=cls.Dtype)
+        return cls(a + b, table)
 
     ################################################################################
     # Coequalizers for FiniteFunction
@@ -285,7 +287,7 @@ class FiniteFunction(ABC):
         if f.target is None:
             raise f._nonfinite_target()
         cls = type(f)
-        Q, q = cls.Array.connected_components(f.table, g.table, f.target)
+        Q, q = cls.Array.connected_components(f.table, g.table, f.target, f.Dtype)
         return cls(Q, q)
 
     def coequalizer_universal(q: 'FiniteFunction', f: 'FiniteFunction') -> 'FiniteFunction':
@@ -318,23 +320,23 @@ class FiniteFunction(ABC):
     ################################################################################
     # FiniteFunction also has cartesian structure which is useful
     @classmethod
-    def terminal(cls, a: int, dtype=DTYPE) -> 'FiniteFunction':
+    def terminal(cls, a: int) -> 'FiniteFunction':
         """ Compute the terminal map ``! : a → 1``. """
-        return cls(1, cls.Array.zeros(a, dtype=DTYPE))
+        return cls(1, cls.Array.zeros(a, dtype=cls.Dtype))
 
     # TODO: rename this "element"?
     @classmethod
-    def singleton(cls, x: int, b: int | None, dtype=DTYPE) -> 'FiniteFunction':
+    def singleton(cls, x: int, b: int | None, dtype=None) -> 'FiniteFunction':
         """ return the singleton array ``[x]`` whose domain is ``b``. """
-        return cls.constant(x, 1, b, dtype)
+        return cls.constant(x, 1, b, dtype or cls.Dtype)
 
     @classmethod
-    def constant(cls, x: int, a: int, b: int  | None, dtype=DTYPE) -> 'FiniteFunction':
+    def constant(cls, x: int, a: int, b: int  | None, dtype=None) -> 'FiniteFunction':
         """ ``constant(x, a, b)`` is the constant function of type ``a → b``
         mapping all inputs to the value ``x``. """
         if type(b) is int and x >= b:
             raise ValueError(f"{x} is not an element of the set {{0..{b}}}")
-        return cls(b, cls.Array.full(a, x, dtype=dtype))
+        return cls(b, cls.Array.full(a, x, dtype=dtype or cls.Dtype))
 
     ################################################################################
     # Sorting morphisms
@@ -344,13 +346,13 @@ class FiniteFunction(ABC):
         Return the *stable* sorting permutation     ``p : A → A``
         such that                                   ``p >> f``  is monotonic.
         """
-        return type(f)(f.source, f.Array.argsort(f.table))
+        return type(f)(f.source, f.Array.argsort(f.table).astype(f.Dtype))
 
     ################################################################################
     # Useful permutations
 
     @classmethod
-    def transpose(cls, a: int, b: int, dtype=DTYPE) -> 'FiniteFunction':
+    def transpose(cls, a: int, b: int, dtype=None) -> 'FiniteFunction':
         """ ``transpose(a, b)`` is the "transposition permutation" for an ``a → b`` matrix.
 
         Given an ``b*a``-dimensional input thought of as a matrix in row-major
@@ -361,8 +363,8 @@ class FiniteFunction(ABC):
         then setting indexes ``N[transpose(a, b)] = M`` is the same as writing
         ``N = M.T``
         """
-        table = cls.Array.zeros(b*a, dtype=dtype)
-        i = cls.Array.arange(0, b*a)
+        table = cls.Array.zeros(b*a, dtype=dtype or cls.Dtype)
+        i = cls.Array.arange(0, b*a, dtype=cls.Dtype)
         # TODO: this can be done without arithmetic operators; but is it faster?
         # A quick sketch of how:
         # repeating the vector (0, m, 2m, ... nm) and adding with (0 0 0 ... 1 1 1 ... 2 2 2 ... )
@@ -399,7 +401,7 @@ class FiniteFunction(ABC):
             return cls.initial(0)
 
         targets = cls.Array.array([f.target for f in fs])
-        offsets = cls.Array.zeros(len(targets) + 1, dtype=type(fs[0].source))
+        offsets = cls.Array.zeros(len(targets) + 1, dtype=cls.Dtype)
         offsets[1:] = cls.Array.cumsum(targets) # exclusive scan
         table = cls.Array.concatenate([f.table + offset for f, offset in zip(fs, offsets[:-1])])
         return cls(offsets[-1], table)
@@ -484,24 +486,24 @@ class IndexedCoproduct(HasFiniteFunction):
 
     @property
     def dtype(self):
-        """ Return the dtype of the sources array """
+        """ Return the dtype of the underlying table """
         return self.sources.dtype
 
     @classmethod
-    def initial(cls, target: Target, dtype=DTYPE) -> 'IndexedCoproduct':
+    def initial(cls, target: Target, dtype=None) -> 'IndexedCoproduct':
         return cls(
             cls.FiniteFunction().initial(None, dtype=dtype),
             cls.FiniteFunction().initial(target, dtype=dtype))
 
     @classmethod
-    def singleton(cls, values: FiniteFunction, dtype=DTYPE) -> 'IndexedCoproduct':
+    def singleton(cls, values: FiniteFunction, dtype=None) -> 'IndexedCoproduct':
         """ Turn a :py:class:`FiniteFunction` ``f : A → B`` into an :py:class:`IndexedCoproduct`
         `` Σ_{x ∈ 1} f : A → B """
         sources = cls.FiniteFunction().singleton(len(values), None, dtype)
         return cls(sources, values)
 
     @classmethod
-    def elements(cls, values: FiniteFunction, dtype=DTYPE) -> 'IndexedCoproduct':
+    def elements(cls, values: FiniteFunction, dtype=None) -> 'IndexedCoproduct':
         """ Turn a :py:class:`FiniteFunction` ``f : A → B`` into an :py:class:`IndexedCoproduct`
         `` Σ_{a ∈ A} f_a : A → B """
         sources = cls.FiniteFunction().constant(1, len(values), None, dtype=dtype)
@@ -519,8 +521,10 @@ class IndexedCoproduct(HasFiniteFunction):
     def from_list(cls, target, fs: List['FiniteFunction']) -> 'IndexedCoproduct':
         """ Create an `IndexedCoproduct` from a list of :py:class:`FiniteFunction` """
         assert all(target == f.target for f in fs)
+        dtype = cls.FiniteFunction().Dtype
+        sources_table = cls.FiniteFunction().Array.array([len(f) for f in fs], dtype=dtype)
         return cls(
-            sources=cls.FiniteFunction()(None, [len(f) for f in fs], dtype=int),
+            sources=cls.FiniteFunction()(None, sources_table),
             values=cls.FiniteFunction().coproduct_list(fs, target=target))
 
     def __iter__(self):

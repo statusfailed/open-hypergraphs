@@ -13,10 +13,7 @@ import scipy.sparse as sparse
 
 from open_hypergraphs.array.backend import ArrayBackend
 
-
 class NumpyBackend(ArrayBackend):
-    DEFAULT_DTYPE = np.int64
-
     Type = np.ndarray
     """ The underlying array type used by functions in the backend. For numpy this is ``np.ndarray``.
 
@@ -26,27 +23,19 @@ class NumpyBackend(ArrayBackend):
     # have the incorrect value in documentation.
 
     @classmethod
-    def to_dtype(cls, dtype=None):
-        return cls.DEFAULT_DTYPE if dtype is None else dtype
-
-    @classmethod
-    def array(cls, elems, dtype=None):
-        dtype = cls.to_dtype(dtype)
+    def array(cls, elems, dtype):
         return np.fromiter(elems, dtype)
 
     @classmethod
-    def arange(cls, start: int, stop: int, dtype=None) -> np.ndarray:
-        dtype = cls.to_dtype(dtype)
+    def arange(cls, start: int, stop: int, dtype) -> np.ndarray:
         return np.arange(start=start, stop=stop, dtype=dtype)
 
     @classmethod
-    def zeros(cls, n: int, dtype=None):
-        dtype = cls.to_dtype(dtype)
+    def zeros(cls, n: int, dtype):
         return np.zeros(n, dtype=dtype)
 
     @classmethod
-    def ones(cls, n: int, dtype=None):
-        dtype = cls.to_dtype(dtype)
+    def ones(cls, n: int, dtype):
         return np.ones(n, dtype=dtype)
 
     @classmethod
@@ -81,7 +70,7 @@ class NumpyBackend(ArrayBackend):
     # Utilities
 
     @classmethod
-    def full(cls, n, x, dtype=None) -> np.ndarray:
+    def full(cls, n, x, dtype) -> np.ndarray:
         return np.full(n, x, dtype=dtype)
 
     @classmethod
@@ -97,7 +86,7 @@ class NumpyBackend(ArrayBackend):
     # NOTE: we have to wrap libraries since we don't tend to get a consistent interface,
     # and don't want to expose e.g. sparse graphs in the main code.
     @classmethod
-    def connected_components(cls, source, target, n, dtype=None):
+    def connected_components(cls, source, target, n, dtype):
         """Compute the connected components of a graph with ``N`` nodes,
         whose edges are encoded as a pair of arrays ``(source, target)``
         such that the edges of the graph are ``source[i] → target[i]``.
@@ -119,7 +108,7 @@ class NumpyBackend(ArrayBackend):
 
         # make an n×n sparse matrix representing the graph with edges
         # source[i] → target[i]
-        ones = np.ones(len(source), dtype=cls.DEFAULT_DTYPE)
+        ones = np.ones(len(source), dtype=dtype)
         M = sparse.csr_matrix((ones, (source, target)), shape=(n, n))
 
         # compute & return connected components

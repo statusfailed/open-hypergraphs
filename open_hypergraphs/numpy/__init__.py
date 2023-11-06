@@ -1,6 +1,8 @@
 from typing import Type
 from abc import ABC
 
+import numpy as np
+
 import open_hypergraphs.finite_function as f
 import open_hypergraphs.hypergraph as h
 import open_hypergraphs.open_hypergraph as o
@@ -10,6 +12,7 @@ import open_hypergraphs.functor.optic as optic
 from open_hypergraphs.array.numpy import NumpyBackend
 
 class FiniteFunction(f.FiniteFunction):
+    Dtype = np.uint32
     Array = NumpyBackend
 
 class IndexedCoproduct(f.IndexedCoproduct):

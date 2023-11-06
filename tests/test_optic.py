@@ -5,7 +5,6 @@ import hypothesis.strategies as st
 
 from open_hypergraphs import *
 
-from tests.strategy.numpy import DEFAULT_DTYPE
 from tests.strategy.open_hypergraph import OpenHypergraphStrategies as OpenHyp
 from tests.strategy.finite_function import FiniteFunctionStrategies as FinFun
 
@@ -20,31 +19,31 @@ class Identity(Functor):
 
 class FrobeniusIdentity(FrobeniusFunctor):
     """ The identity functor, implemented via FrobeniusFunctor """
-    def map_objects(self, objects: FiniteFunction, dtype=DEFAULT_DTYPE) -> IndexedCoproduct:
-        return self.IndexedCoproduct().elements(objects, dtype)
+    def map_objects(self, objects: FiniteFunction) -> IndexedCoproduct:
+        return self.IndexedCoproduct().elements(objects)
 
-    def map_operations(self, x: FiniteFunction, a: IndexedCoproduct, b: IndexedCoproduct, dtype=DEFAULT_DTYPE) -> OpenHypergraph:
-        return self.OpenHypergraph().tensor_operations(x, a, b, dtype)
+    def map_operations(self, x: FiniteFunction, a: IndexedCoproduct, b: IndexedCoproduct) -> OpenHypergraph:
+        return self.OpenHypergraph().tensor_operations(x, a, b)
 
 class FrobeniusDagger(FrobeniusFunctor):
     """ The dagger functor, implemented via FrobeniusFunctor """
-    def map_objects(self, objects: FiniteFunction, dtype=DEFAULT_DTYPE) -> IndexedCoproduct:
+    def map_objects(self, objects: FiniteFunction) -> IndexedCoproduct:
         # identity-on-objects
-        return self.IndexedCoproduct().elements(objects, dtype)
+        return self.IndexedCoproduct().elements(objects)
 
-    def map_operations(self, x: FiniteFunction, a: IndexedCoproduct, b: IndexedCoproduct, dtype=DEFAULT_DTYPE) -> OpenHypergraph:
+    def map_operations(self, x: FiniteFunction, a: IndexedCoproduct, b: IndexedCoproduct) -> OpenHypergraph:
         # swap source/target of each operation
-        return self.OpenHypergraph().tensor_operations(x, b, a, dtype)
+        return self.OpenHypergraph().tensor_operations(x, b, a)
 
 class DaggerOptic(Optic):
     F: FrobeniusFunctor = FrobeniusIdentity()
     R: FrobeniusFunctor = FrobeniusDagger()
 
-    def residual(self, x: FiniteFunction, A: IndexedCoproduct, B: IndexedCoproduct, dtype=DEFAULT_DTYPE) -> IndexedCoproduct:
+    def residual(self, x: FiniteFunction, A: IndexedCoproduct, B: IndexedCoproduct) -> IndexedCoproduct:
         # NOTE: we use map_values to get an IndexedCoproduct whose values are
         # objects, not ints.
-        sources = FiniteFunction.constant(0, x.source, None, dtype)
-        values = FiniteFunction.initial(A.target, A.values.dtype)
+        sources = FiniteFunction.constant(0, x.source, None)
+        values = FiniteFunction.initial(A.target, dtype=A.values.dtype)
         return IndexedCoproduct(sources, values)
 
 class OpticSpec():
@@ -52,10 +51,10 @@ class OpticSpec():
     def test_dagger_optic_identity2(self):
         O = DaggerOptic()
 
-        X = FiniteFunction(None, ["A", "B"], 'O')
-        id2 = OpenHypergraph.identity(X, X.to_initial(), DEFAULT_DTYPE)
+        X = FiniteFunction(None, FiniteFunction.Array.array(["A", "B"], 'O'))
+        id2 = OpenHypergraph.identity(X, X.to_initial())
 
-        OX = O.map_objects(X, DEFAULT_DTYPE)
+        OX = O.map_objects(X)
         # Check that for each generating object in X, there is a sublist in OX.
         assert len(OX) == len(X)
         assert FiniteFunction.transpose(len(X), 2) >> OX.values == X + X
@@ -71,17 +70,17 @@ class OpticSpec():
         R = FrobeniusDagger()
         O = DaggerOptic(F, R)
 
-        X = FiniteFunction(None, ["A", "B"], 'O')
-        Y = FiniteFunction(None, ["C"], 'O')
-        x = FiniteFunction.singleton(0, 1, DEFAULT_DTYPE)
-        f = OpenHypergraph.singleton(x, X, Y, DEFAULT_DTYPE)
+        X = FiniteFunction(None, FiniteFunction.Array.array(["A", "B"], dtype='O'))
+        Y = FiniteFunction(None, FiniteFunction.Array.array(["Y"], dtype='O'))
+        x = FiniteFunction.singleton(0, 1)
+        f = OpenHypergraph.singleton(x, X, Y)
 
         # Check that for each generating object in X, there is a sublist in OX.
-        OX = O.map_objects(X, DEFAULT_DTYPE)
+        OX = O.map_objects(X)
         assert len(OX) == len(X)
         assert FiniteFunction.transpose(len(X), 2) >> OX.values == X + X
 
-        OY = O.map_objects(Y, DEFAULT_DTYPE)
+        OY = O.map_objects(Y)
         assert len(OY) == len(Y)
         assert FiniteFunction.transpose(len(Y), 2) >> OY.values == Y + Y
 
@@ -94,19 +93,18 @@ class OpticSpec():
         F = FrobeniusIdentity()
         R = FrobeniusDagger()
         O = DaggerOptic(F, R)
-        dtype = f.dtype
 
         Of = O(f)
-        FA = F.map_objects(f.source, dtype)
-        FB = F.map_objects(f.target, dtype)
-        RA = R.map_objects(f.source, dtype)
-        RB = R.map_objects(f.target, dtype)
+        FA = F.map_objects(f.source)
+        FB = F.map_objects(f.target)
+        RA = R.map_objects(f.source)
+        RB = R.map_objects(f.target)
 
         assert len(FA) == len(RA)
         assert len(FB) == len(RB)
 
-        pA = (FA + RA).sources.injections(self.FiniteFunction.transpose(len(FA), 2, dtype=dtype))
-        pB = (FB + RB).sources.injections(self.FiniteFunction.transpose(len(FB), 2, dtype=dtype))
+        pA = (FA + RA).sources.injections(self.FiniteFunction.transpose(len(FA), 2))
+        pB = (FB + RB).sources.injections(self.FiniteFunction.transpose(len(FB), 2))
 
         assert pA >> Of.source == FA.values + RA.values
         assert pB >> Of.target == FB.values + RB.values

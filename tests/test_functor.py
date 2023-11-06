@@ -5,7 +5,6 @@ import hypothesis.strategies as st
 
 from open_hypergraphs import *
 
-from tests.strategy.numpy import DEFAULT_DTYPE
 from tests.strategy.open_hypergraph import OpenHypergraphStrategies as OpenHyp
 from tests.strategy.finite_function import FiniteFunctionStrategies as FinFun
 
@@ -20,11 +19,11 @@ class Identity(Functor):
 
 class FrobeniusIdentity(FrobeniusFunctor):
     """ The identity functor, implemented via FrobeniusFunctor """
-    def map_objects(self, objects: FiniteFunction, dtype=DEFAULT_DTYPE) -> IndexedCoproduct:
-        return self.IndexedCoproduct().elements(objects, dtype)
+    def map_objects(self, objects: FiniteFunction) -> IndexedCoproduct:
+        return self.IndexedCoproduct().elements(objects)
 
-    def map_operations(self, x: FiniteFunction, a: IndexedCoproduct, b: IndexedCoproduct, dtype=DEFAULT_DTYPE) -> OpenHypergraph:
-        return self.OpenHypergraph().tensor_operations(x, a, b, dtype)
+    def map_operations(self, x: FiniteFunction, a: IndexedCoproduct, b: IndexedCoproduct) -> OpenHypergraph:
+        return self.OpenHypergraph().tensor_operations(x, a, b)
 
 class FunctorSpec():
     @given(OpenHyp.arrows())

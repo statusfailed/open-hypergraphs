@@ -72,12 +72,11 @@ class HypergraphStrategies:
         [H] = draw(cls.objects(labels=(w, x)))
 
         # A morphism of hypergraphs is a mapping on vertices and edges, respectively!
-        dtype = G.s.values.table.dtype
         return HypergraphArrow(
             source=G,
             target=H,
-            w=FinFun.FiniteFunction.inj0(G.W, H.W - G.W, dtype),
-            x=FinFun.FiniteFunction.inj0(G.X, H.X - G.X, dtype))
+            w=FinFun.FiniteFunction.inj0(G.W, H.W - G.W),
+            x=FinFun.FiniteFunction.inj0(G.X, H.X - G.X))
 
     # Draw a span of hypergraphs
     #     l   r

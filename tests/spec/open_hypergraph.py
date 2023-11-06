@@ -55,9 +55,8 @@ class OpenHypergraphSpec:
     @given(OpenHyp.arrows())
     def test_identity_law(self, f):
         """ Check that ``f ; id = f`` and ``id ; f == f``. """
-        dtype = f.source.table.dtype
-        id_A = OpenHyp.OpenHypergraph.identity(f.source, f.H.x.to_initial(), dtype)
-        id_B = OpenHyp.OpenHypergraph.identity(f.target, f.H.x.to_initial(), dtype)
+        id_A = OpenHyp.OpenHypergraph.identity(f.source, f.H.x.to_initial())
+        id_B = OpenHyp.OpenHypergraph.identity(f.target, f.H.x.to_initial())
 
         _assert_equality_invariants(f, id_A >> f)
         _assert_equality_invariants(f, f >> id_B)
@@ -103,7 +102,6 @@ class OpenHypergraphSpec:
     @given(arrow_pair)
     def test_twist_naturality(self, fg):
         f, g = fg
-        dtype = f.s.table.dtype
         x = f.H.x.to_initial()
 
         #     s_Y           s_X
@@ -112,10 +110,10 @@ class OpenHypergraphSpec:
         #       x     =     x
         # --g--/ \--     --/ \--f--
 
-        s_Y = type(f).twist(f.target, g.target, x, dtype)
+        s_Y = type(f).twist(f.target, g.target, x)
         a = (f @ g) >> s_Y
 
-        s_X = type(f).twist(f.source, g.source, x, dtype)
+        s_X = type(f).twist(f.source, g.source, x)
         b = s_X >> (g @ f)
 
         _assert_equality_invariants(a, b)
@@ -161,7 +159,7 @@ class OpenHypergraphSpec:
         x = H.x
         a = H.s.map_values(H.w)
         b = H.t.map_values(H.w)
-        f = OpenHyp.OpenHypergraph.tensor_operations(x, a, b, H.dtype)
+        f = OpenHyp.OpenHypergraph.tensor_operations(x, a, b)
         assert len(f.H.x) == len(H.x)
         assert len(f.s) == len(H.s.values)
         assert len(f.t) == len(H.t.values)
@@ -175,7 +173,7 @@ class OpenHypergraphSpec:
         OpenHypergraph = OpenHyp.OpenHypergraph
 
         # The direct tensor of operations...
-        f = OpenHypergraph.tensor_operations(x, a, b, H.dtype)
+        f = OpenHypergraph.tensor_operations(x, a, b)
 
         # and the explicit n-fold tensoring...
         g = OpenHypergraph.unit(*f.signature())

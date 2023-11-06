@@ -19,7 +19,7 @@ class Backend(Protocol):
 ################################################################################
 # Numpy backend
 
-from tests.strategy.numpy import DEFAULT_DTYPE, arrays, permutations
+from tests.strategy.numpy import arrays, permutations
 from tests.strategy.finite_function import FiniteFunctionStrategies
 from tests.strategy.hypergraph import HypergraphStrategies
 from tests.strategy.open_hypergraph import OpenHypergraphStrategies
@@ -43,7 +43,6 @@ class NumpyBackend(Backend):
         # 
         # "arrays" and "permutation_arrays" are Hypothesis strategies for arrays
         # of the chosen array backend.
-        FiniteFunctionStrategies.DEFAULT_DTYPE = DEFAULT_DTYPE
         FiniteFunctionStrategies.arrays = arrays
         FiniteFunctionStrategies.permutation_arrays = permutations
 

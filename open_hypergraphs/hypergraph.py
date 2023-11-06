@@ -2,7 +2,7 @@ from typing import Any, Type
 from typing_extensions import Protocol
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from open_hypergraphs.finite_function import DTYPE, FiniteFunction, IndexedCoproduct, HasIndexedCoproduct
+from open_hypergraphs.finite_function import FiniteFunction, IndexedCoproduct, HasIndexedCoproduct
 
 @dataclass
 class Hypergraph(HasIndexedCoproduct):
@@ -10,10 +10,6 @@ class Hypergraph(HasIndexedCoproduct):
     t: IndexedCoproduct # targets : Σ_{x ∈ X} coarity(e) → W
     w: FiniteFunction   # hypernode labels w : W → Σ₀
     x: FiniteFunction   # hyperedge labels x : X → Σ₁
-
-    @property
-    def dtype(self):
-        return self.s.dtype
 
     # number of vertices
     @property
@@ -36,25 +32,21 @@ class Hypergraph(HasIndexedCoproduct):
         assert len(self.s) == self.X
         assert len(self.t) == self.X
 
-        # dtypes
-        if self.s.dtype != self.t.dtype:
-            raise ValueError("dtypes of component functions must match")
-
     @classmethod
-    def empty(cls, w: FiniteFunction, x: FiniteFunction, dtype=DTYPE) -> 'Hypergraph':
+    def empty(cls, w: FiniteFunction, x: FiniteFunction) -> 'Hypergraph':
         """ Construct the empty hypergraph with no hypernodes or hyperedges """
-        e = cls.IndexedCoproduct().initial(0, dtype=dtype)
+        e = cls.IndexedCoproduct().initial(0)
         return cls(e, e, w, x)
 
     @classmethod
-    def discrete(cls, w: FiniteFunction, x: FiniteFunction, dtype=DTYPE) -> 'Hypergraph':
+    def discrete(cls, w: FiniteFunction, x: FiniteFunction) -> 'Hypergraph':
         """ The discrete hypergraph, consisting of only hypernodes """
         if len(x) > 0:
             raise ValueError(f"Hypergraph.discrete(w, x) must be called with len(x) == 0, but x : {x.source} → {x.target}")
 
         return cls(
-            s = cls.IndexedCoproduct().initial(len(w), dtype),
-            t = cls.IndexedCoproduct().initial(len(w), dtype),
+            s = cls.IndexedCoproduct().initial(len(w)),
+            t = cls.IndexedCoproduct().initial(len(w)),
             w = w,
             x = x)
 

@@ -13,7 +13,6 @@ class FiniteFunctionStrategies:
     """
 
     # Generators for numpy-compatible arrays
-    DEFAULT_DTYPE = None
     arrays = None
     permutation_arrays = None
 
@@ -73,17 +72,18 @@ class FiniteFunctionStrategies:
         if source is None:
             raise ValueError("Cannot generate an arrow with source = None")
 
+        dtype = cls.FiniteFunction.Dtype
         source, target = draw(cls.arrow_type(
             source=source,
             target=target,
             finite_target=finite_target))
 
         if target == 0:
-            table = cls.Array.zeros(0, dtype=cls.DEFAULT_DTYPE)
+            table = cls.Array.zeros(0, dtype=dtype)
         else:
             # NOTE: set high to MAX_OBJECT if non-finite.
             high = cls.MAX_OBJECT if target is None else target
-            table = draw(cls.arrays(n=source, high=high, dtype=cls.DEFAULT_DTYPE))
+            table = draw(cls.arrays(n=source, high=high, dtype=dtype))
         return cls.FiniteFunction(target, table)
 
     @classmethod
@@ -92,7 +92,7 @@ class FiniteFunctionStrategies:
         if target is Random:
             target = draw(cls.objects())
 
-        table = draw(cls.permutation_arrays(n=target, dtype=cls.DEFAULT_DTYPE))
+        table = draw(cls.permutation_arrays(n=target, dtype=cls.FiniteFunction.Dtype))
         return cls.FiniteFunction(target, table)
 
     @classmethod
