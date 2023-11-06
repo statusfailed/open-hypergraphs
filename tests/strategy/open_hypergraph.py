@@ -23,7 +23,7 @@ class OpenHypergraphStrategies:
     @st.composite
     def identities(draw, cls):
         H = draw(Hyp.discrete())
-        s = t = FinFun.FiniteFunction.identity(len(H.w))
+        s = t = FinFun.FiniteFunction.identity(len(H.w), dtype=H.dtype)
         return cls.OpenHypergraph(s, t, H)
 
     @classmethod

@@ -7,7 +7,7 @@ from open_hypergraphs.open_hypergraph import OpenHypergraph, HasOpenHypergraph
 class Functor(HasOpenHypergraph, ABC):
     """ Strict symmetric monoidal hypergraph functors """
     @abstractmethod
-    def map_objects(self, objects: FiniteFunction) -> IndexedCoproduct:
+    def map_objects(self, objects: FiniteFunction, dtype) -> IndexedCoproduct:
         ...
 
     @abstractmethod
@@ -39,7 +39,7 @@ class FrobeniusFunctor(Functor, ABC):
         Fx = self.map_operations(f.H.x, sources, targets)
 
         # Fw is the tensoring of objects F(w₀) ● F(w₁) ● ... ● F(wn)
-        Fw = self.map_objects(f.H.w)
+        Fw = self.map_objects(f.H.w, dtype=f.dtype)
 
         # Signature
         w, x = f.signature()

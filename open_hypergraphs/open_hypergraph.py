@@ -10,6 +10,14 @@ class OpenHypergraph(HasHypergraph):
     t: FiniteFunction
     H: Hypergraph
 
+    def __post_init__(self):
+        if self.s.dtype != self.t.dtype or self.t.dtype != self.H.dtype:
+            raise ValueError("dtypes of all components must be the same")
+
+    @property
+    def dtype(self):
+        return self.s.dtype
+
     @property
     def source(self):
         return self.s >> self.H.w
@@ -70,8 +78,8 @@ class OpenHypergraph(HasHypergraph):
     def twist(cls, a: FiniteFunction, b: FiniteFunction, x: FiniteFunction, dtype=DTYPE) -> 'OpenHypergraph':
         if len(x) != 0:
             raise ValueError(f"twist(a, b, x) must have len(x) == 0, but len(x) == {len(x)}")
-        s = cls.FiniteFunction().twist(len(a), len(b))
-        t = cls.FiniteFunction().identity(len(a) + len(b))
+        s = cls.FiniteFunction().twist(len(a), len(b), dtype=dtype)
+        t = cls.FiniteFunction().identity(len(a) + len(b), dtype=dtype)
         # NOTE: because the twist is in the source map, the type of the wires in
         # this hypergraph is b + a instead of a + b! (this matters!)
         H = cls.Hypergraph().discrete(b + a, x, dtype=dtype)
@@ -96,7 +104,7 @@ class OpenHypergraph(HasHypergraph):
         return cls.spider(s, t, w, x, dtype)
 
     @classmethod
-    def singleton(cls, x: FiniteFunction, a: FiniteFunction, b: FiniteFunction) -> 'OpenHypergraph':
+    def singleton(cls, x: FiniteFunction, a: FiniteFunction, b: FiniteFunction, dtype=None) -> 'OpenHypergraph':
         """ Given FiniteFunctions ``a : A → Σ₀`` and ``b : B → Σ₀`` and an
         operation ``x : 1 → Σ₁``, create an open hypergraph with a single
         operation ``x`` with type ``A → B``. """
@@ -106,11 +114,11 @@ class OpenHypergraph(HasHypergraph):
         if a.target != b.target:
             raise ValueError(f"a and b must have same target, but a.target == {a.target} and b.target == {b.target}")
 
-        s = cls.FiniteFunction().inj0(len(a), len(b))
-        t = cls.FiniteFunction().inj1(len(a), len(b))
+        s = cls.FiniteFunction().inj0(len(a), len(b), dtype)
+        t = cls.FiniteFunction().inj1(len(a), len(b), dtype)
         H = cls.Hypergraph()(
-            s = cls.IndexedCoproduct().singleton(s),
-            t = cls.IndexedCoproduct().singleton(t),
+            s = cls.IndexedCoproduct().singleton(s, dtype),
+            t = cls.IndexedCoproduct().singleton(t, dtype),
             w = a + b,
             x = x)
 
@@ -120,7 +128,7 @@ class OpenHypergraph(HasHypergraph):
     # List operations
 
     @classmethod
-    def tensor_operations(cls, x: FiniteFunction, a: IndexedCoproduct, b: IndexedCoproduct) -> 'OpenHypergraph':
+    def tensor_operations(cls, x: FiniteFunction, a: IndexedCoproduct, b: IndexedCoproduct, dtype=DTYPE) -> 'OpenHypergraph':
         """ The N-fold tensoring of operations ``x``. Like 'singleton' but for many operations.
 
             x : N → Σ₁
@@ -134,8 +142,8 @@ class OpenHypergraph(HasHypergraph):
         if len(x) != len(a) or len(x) != len(b):
             raise ValueError("must have len(x) == len(a) == len(b)")
 
-        s = cls.FiniteFunction().inj0(len(a.values), len(b.values))
-        t = cls.FiniteFunction().inj1(len(a.values), len(b.values))
+        s = cls.FiniteFunction().inj0(len(a.values), len(b.values), dtype=dtype)
+        t = cls.FiniteFunction().inj1(len(a.values), len(b.values), dtype=dtype)
         H = cls.Hypergraph()(
             s = cls.IndexedCoproduct()(sources=a.sources, values=s),
             t = cls.IndexedCoproduct()(sources=b.sources, values=t),

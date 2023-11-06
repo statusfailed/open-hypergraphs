@@ -124,4 +124,4 @@ class NumpyBackend(ArrayBackend):
 
         # compute & return connected components
         c, cc_ix = sparse.csgraph.connected_components(M)
-        return c, cc_ix
+        return c, cc_ix.astype(source.dtype)

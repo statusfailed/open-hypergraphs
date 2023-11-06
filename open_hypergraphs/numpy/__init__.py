@@ -5,6 +5,7 @@ import open_hypergraphs.finite_function as f
 import open_hypergraphs.hypergraph as h
 import open_hypergraphs.open_hypergraph as o
 import open_hypergraphs.functor as functor
+import open_hypergraphs.functor.optic as optic
 
 from open_hypergraphs.array.numpy import NumpyBackend
 
@@ -34,6 +35,11 @@ class Functor(functor.Functor):
 # NOTE: have to inherit from FrobeniusFunctor to make method resolution work,
 # but that means supplying OpenHypergraph method!
 class FrobeniusFunctor(functor.FrobeniusFunctor):
+    @classmethod
+    def OpenHypergraph(cls) -> Type[o.OpenHypergraph]:
+        return OpenHypergraph
+
+class Optic(optic.Optic):
     @classmethod
     def OpenHypergraph(cls) -> Type[o.OpenHypergraph]:
         return OpenHypergraph

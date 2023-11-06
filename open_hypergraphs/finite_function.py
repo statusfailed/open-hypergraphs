@@ -78,6 +78,10 @@ class FiniteFunction(ABC):
         return ValueError("FiniteFunction must have finite domain, but had target = {self.target}")
 
     @property
+    def dtype(self):
+        return self.table.dtype
+
+    @property
     def source(self) -> int:
         """The source (aka "domain") of this finite function"""
         return len(self.table)
@@ -245,13 +249,13 @@ class FiniteFunction(ABC):
         return f.tensor(g)
 
     @classmethod
-    def twist(cls, a: int, b: int) -> 'FiniteFunction':
+    def twist(cls, a: int, b: int, dtype=DTYPE) -> 'FiniteFunction':
         # Read a permutation as the array whose ith position denotes "where to send" value i.
         # e.g., twist_{2, 3} = [3 4 0 1 2]
         #       twist_{2, 1} = [1 2 0]
         #       twist_{0, 2} = [0 1]
         table = cls.Array.concatenate([b + cls.Array.arange(0, a), cls.Array.arange(0, b)])
-        return cls(a + b, table)
+        return cls(a + b, table.astype(dtype))
 
     ################################################################################
     # Coequalizers for FiniteFunction
@@ -478,6 +482,11 @@ class IndexedCoproduct(HasFiniteFunction):
         assert self.sources.target is None
         assert len(self.values) == self.Array.sum(self.sources.table)
 
+    @property
+    def dtype(self):
+        """ Return the dtype of the sources array """
+        return self.sources.dtype
+
     @classmethod
     def initial(cls, target: Target, dtype=DTYPE) -> 'IndexedCoproduct':
         return cls(
@@ -485,10 +494,10 @@ class IndexedCoproduct(HasFiniteFunction):
             cls.FiniteFunction().initial(target, dtype=dtype))
 
     @classmethod
-    def singleton(cls, values: FiniteFunction) -> 'IndexedCoproduct':
+    def singleton(cls, values: FiniteFunction, dtype=DTYPE) -> 'IndexedCoproduct':
         """ Turn a :py:class:`FiniteFunction` ``f : A → B`` into an :py:class:`IndexedCoproduct`
         `` Σ_{x ∈ 1} f : A → B """
-        sources = cls.FiniteFunction().singleton(len(values), None)
+        sources = cls.FiniteFunction().singleton(len(values), None, dtype)
         return cls(sources, values)
 
     @classmethod

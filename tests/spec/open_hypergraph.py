@@ -161,7 +161,7 @@ class OpenHypergraphSpec:
         x = H.x
         a = H.s.map_values(H.w)
         b = H.t.map_values(H.w)
-        f = OpenHyp.OpenHypergraph.tensor_operations(x, a, b)
+        f = OpenHyp.OpenHypergraph.tensor_operations(x, a, b, H.dtype)
         assert len(f.H.x) == len(H.x)
         assert len(f.s) == len(H.s.values)
         assert len(f.t) == len(H.t.values)
@@ -175,7 +175,7 @@ class OpenHypergraphSpec:
         OpenHypergraph = OpenHyp.OpenHypergraph
 
         # The direct tensor of operations...
-        f = OpenHypergraph.tensor_operations(x, a, b)
+        f = OpenHypergraph.tensor_operations(x, a, b, H.dtype)
 
         # and the explicit n-fold tensoring...
         g = OpenHypergraph.unit(*f.signature())

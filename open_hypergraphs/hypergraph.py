@@ -11,6 +11,10 @@ class Hypergraph(HasIndexedCoproduct):
     w: FiniteFunction   # hypernode labels w : W → Σ₀
     x: FiniteFunction   # hyperedge labels x : X → Σ₁
 
+    @property
+    def dtype(self):
+        return self.s.dtype
+
     # number of vertices
     @property
     def W(self):
@@ -31,6 +35,10 @@ class Hypergraph(HasIndexedCoproduct):
         # Number of edges
         assert len(self.s) == self.X
         assert len(self.t) == self.X
+
+        # dtypes
+        if self.s.dtype != self.t.dtype:
+            raise ValueError("dtypes of component functions must match")
 
     @classmethod
     def empty(cls, w: FiniteFunction, x: FiniteFunction, dtype=DTYPE) -> 'Hypergraph':
