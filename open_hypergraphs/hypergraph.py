@@ -70,6 +70,19 @@ class Hypergraph(HasIndexedCoproduct):
         t = self.t.map_values(q)
         return type(self)(s, t, u, self.x) # type: ignore
 
+    def permute(self, w: FiniteFunction, x: FiniteFunction) -> 'Hypergraph':
+        """ Permute the nodes and edges of a Hypergraph """
+        if w.source != self.W or w.target != self.W:
+            raise ValueError(f"w must be a permutation of type {self.W} → {self.W}")
+        if x.source != self.X or x.target != self.X:
+            raise ValueError(f"x must be a permutation of type {self.X} → {self.X}")
+
+        return type(self)(
+            s = self.s.map_indexes(x).map_values(w),
+            t = self.t.map_indexes(x).map_values(w),
+            w = w.argsort() >> self.w,
+            x = x.argsort() >> self.x)
+
 class HasHypergraph(HasIndexedCoproduct):
     @classmethod
     @abstractmethod

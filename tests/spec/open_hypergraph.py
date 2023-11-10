@@ -7,10 +7,11 @@ import hypothesis.strategies as st
 from tests.strategy.hypergraph import HypergraphStrategies as Hyp
 from tests.strategy.open_hypergraph import OpenHypergraphStrategies as OpenHyp
 
+from tests.spec.hypergraph import _assert_hypergraph_equality_invariants
 from open_hypergraphs import Hypergraph, OpenHypergraph
 
 def _assert_equality_invariants(f: OpenHypergraph, g: OpenHypergraph):
-    """ Not-quite equality checking for OpenHypergraph.
+    """ Not-quite-equality checking for OpenHypergraph.
     This only verifies that types are equal, and that there are the same number
     of internal wires, edges whose labels have the same cardinalities.
     Proper equality checking requires graph isomorphism: TODO!
@@ -19,17 +20,7 @@ def _assert_equality_invariants(f: OpenHypergraph, g: OpenHypergraph):
     assert f.source == g.source
     assert f.target == g.target
 
-    # same number of wires, wire labels
-    assert f.H.W == g.H.W
-    i = f.H.w.argsort()
-    j = g.H.w.argsort()
-    assert (i >> f.H.w) == (j >> g.H.w)
-
-    # same number of edges, edge labels
-    assert f.H.X == g.H.X
-    i = f.H.x.argsort()
-    j = g.H.x.argsort()
-    assert (i >> f.H.x) == (j >> g.H.x)
+    _assert_hypergraph_equality_invariants(f.H, g.H)
 
 arrow_pair = Hyp.labels().flatmap(lambda labels: st.tuples(OpenHyp.arrows(labels=labels), OpenHyp.arrows(labels=labels)))
 
@@ -182,4 +173,10 @@ class OpenHypergraphSpec:
             g = g @ OpenHyp.OpenHypergraph.singleton(xi, ai, bi)
 
         # ... are isomorphic.
+        _assert_equality_invariants(f, g)
+
+    @given(OpenHyp.isomorphism())
+    def test_open_hypergraph_permutation(self, fwx):
+        f, w, x = fwx
+        g = f.permute(w, x)
         _assert_equality_invariants(f, g)

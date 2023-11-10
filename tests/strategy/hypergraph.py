@@ -48,6 +48,14 @@ class HypergraphStrategies:
 
         return result
 
+    @classmethod
+    @st.composite
+    def object_and_permutation(draw, cls, labels=Random):
+        [H] = draw(cls.objects(n=1, labels=labels))
+        w = draw(FinFun.permutations(target=H.W))
+        x = draw(FinFun.permutations(target=H.X))
+        return H, w, x
+
     # Draw a discrete hypergraph
     @classmethod
     @st.composite

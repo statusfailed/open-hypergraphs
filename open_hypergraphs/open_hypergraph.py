@@ -120,6 +120,11 @@ class OpenHypergraph(HasHypergraph):
 
         return cls(s, t, H)
 
+    def permute(self, w: FiniteFunction, x: FiniteFunction) -> 'OpenHypergraph':
+        """ Lift a permutation of Hypergraphs into a permutation of OpenHypergraphs """
+        H = self.H.permute(w, x)
+        return type(self)(self.s >> w, self.t >> w, H)
+
     ##############################
     # List operations
 

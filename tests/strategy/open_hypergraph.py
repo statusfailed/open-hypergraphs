@@ -69,3 +69,11 @@ class OpenHypergraphStrategies:
         a = draw(FinFun.arrows(target=w.source))
         b = draw(FinFun.arrows(target=w.source))
         return cls.OpenHypergraph.singleton(x, a, b)
+
+    @classmethod
+    @st.composite
+    def isomorphism(draw, cls, labels=Random):
+        f = draw(cls.arrows(labels=labels))
+        w = draw(FinFun.permutations(target=f.H.W))
+        x = draw(FinFun.permutations(target=f.H.X))
+        return f, w, x

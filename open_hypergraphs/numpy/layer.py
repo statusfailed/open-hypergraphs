@@ -11,9 +11,11 @@ import numpy as np
 import scipy.sparse as sp
 
 # We use FiniteFunction, OpenHypergraph etc. from the Numpy backend.
+import open_hypergraphs.finite_function as f
 from open_hypergraphs.numpy.types import *
 
-def make_sparse(s: FiniteFunction, t: FiniteFunction) -> sp.csr_array:
+# NOTE: types are a bit of a hack; actually this function expects the numpy-backed FiniteFunction!
+def make_sparse(s: f.FiniteFunction, t: f.FiniteFunction) -> sp.csr_array:
     """Given finite functions ``s : E → A`` and ``t : E → B``
     representing a bipartite graph ``G : A → B``,
     return the sparse ``B×A`` adjacency matrix representing ``G``.
@@ -116,7 +118,7 @@ def kahn(adjacency: sp.csr_array) -> Tuple[np.ndarray, sp.csr_array]:
     # Note that if not np.all(visited), then there must be a cycle.
     return order, visited
 
-def layer(f: OpenHypergraph) -> FiniteFunction:
+def layer(f: OpenHypergraph) -> Tuple[FiniteFunction, np.ndarray]:
     """ Assign a *layering* to an :py:class:`OpenHypergraph` `F`
         This computes a FiniteFunction ``layer(F) : F(X) → K``
         mapping operations of ``F.H`` to a natural number in the ``range(0, K)``

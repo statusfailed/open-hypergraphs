@@ -6,6 +6,25 @@ from tests.strategy.hypergraph import HypergraphStrategies as Hyp
 
 from open_hypergraphs import Hypergraph
 
+def _assert_hypergraph_equality_invariants(H: Hypergraph, G: Hypergraph):
+    """ Not-quite-equality checking for Hypergraphs.
+    This only verifies that types are equal, and that there are the same number
+    of internal wires, edges whose labels have the same cardinalities.
+    Proper equality checking requires graph isomorphism: TODO!
+    """
+
+    # same number of wires, wire labels
+    assert H.W == G.W
+    i = H.w.argsort()
+    j = G.w.argsort()
+    assert (i >> H.w) == (j >> G.w)
+
+    # same number of edges, edge labels
+    assert H.X == G.X
+    i = H.x.argsort()
+    j = G.x.argsort()
+    assert (i >> H.x) == (j >> G.x)
+
 class HypergraphSpec:
 
     @given(Hyp.objects(n=1))
@@ -69,3 +88,9 @@ class HypergraphSpec:
         # the shared nodes K.
         assert H.W == L.W + R.W - K.W
         assert H.X == L.X + R.X
+
+    @given(Hyp.object_and_permutation())
+    def test_hypergraph_permutation(self, Gwx):
+        G, w, x = Gwx
+        H = G.permute(w, x)
+        _assert_hypergraph_equality_invariants(H, G)
