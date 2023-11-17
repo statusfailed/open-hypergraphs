@@ -102,7 +102,7 @@ class FiniteFunction(ABC):
 
     def __call__(self, i: int) -> int:
         if i >= self.source:
-            raise ValueError("Calling {self} with {i} >= source {self.source}")
+            raise ValueError(f"Calling {self} with {i} >= source {self.source}")
         return self.table[i]
 
     @property
