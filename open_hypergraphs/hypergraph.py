@@ -1,5 +1,4 @@
-from typing import Any, Type
-from typing_extensions import Protocol
+from typing import Protocol, Any, Type
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from open_hypergraphs.finite_function import FiniteFunction, IndexedCoproduct, HasIndexedCoproduct

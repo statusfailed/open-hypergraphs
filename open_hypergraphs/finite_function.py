@@ -38,8 +38,7 @@ FiniteFunction(6, [0 1 2 3 4 5 5 5 5 5])
 
 from dataclasses import dataclass
 from abc import abstractmethod, ABC
-from typing import List, Type, Union, Any
-from typing_extensions import Protocol
+from typing import Protocol, List, Type, Union, Any
 
 from open_hypergraphs.array.backend import ArrayBackend, ArrayType
 

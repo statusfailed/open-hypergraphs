@@ -66,9 +66,7 @@ class OpticSpec():
     # Test case for singleton op  f : A ● B → C, which we assume has a dagger
     # f† : C → B ● A
     def test_dagger_optic_singleton(self):
-        F = FrobeniusIdentity()
-        R = FrobeniusDagger()
-        O = DaggerOptic(F, R)
+        O = DaggerOptic()
 
         X = FiniteFunction(None, FiniteFunction.Array.array(["A", "B"], dtype='O'))
         Y = FiniteFunction(None, FiniteFunction.Array.array(["Y"], dtype='O'))
@@ -90,9 +88,9 @@ class OpticSpec():
 
     @given(OpenHyp.arrows())
     def test_dagger_optic_type(self, f):
-        F = FrobeniusIdentity()
-        R = FrobeniusDagger()
-        O = DaggerOptic(F, R)
+        O = DaggerOptic()
+        F = O.F
+        R = O.R
 
         Of = O(f)
         FA = F.map_objects(f.source)

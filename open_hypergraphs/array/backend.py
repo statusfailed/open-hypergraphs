@@ -1,7 +1,5 @@
 """ Loosely typed array backend protocol """
-from typing import Generic, Type, TypeVar, Sequence, List, Tuple, Any
-from typing_extensions import Protocol
-
+from typing import Protocol, Generic, Type, TypeVar, Sequence, List, Tuple, Any
 from collections.abc import MutableMapping
 
 # Arrays are (very) loosely typed
