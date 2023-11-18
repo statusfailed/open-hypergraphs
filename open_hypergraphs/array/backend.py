@@ -1,4 +1,4 @@
-""" Loosely typed array backend protocol """
+""" Interface for implementing array backends """
 from typing import Protocol, Generic, Type, TypeVar, Sequence, List, Tuple, Any
 from collections.abc import MutableMapping
 
