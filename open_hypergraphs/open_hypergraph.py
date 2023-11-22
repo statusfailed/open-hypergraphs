@@ -1,4 +1,4 @@
-from typing import List
+from typing import Self, List
 from dataclasses import dataclass
 from open_hypergraphs.finite_function import FiniteFunction
 from open_hypergraphs.hypergraph import *
@@ -120,7 +120,7 @@ class OpenHypergraph(HasHypergraph):
 
         return cls(s, t, H)
 
-    def permute(self, w: FiniteFunction, x: FiniteFunction) -> 'OpenHypergraph':
+    def permute(self, w: FiniteFunction, x: FiniteFunction) -> Self:
         """ Lift a permutation of Hypergraphs into a permutation of OpenHypergraphs """
         H = self.H.permute(w, x)
         return type(self)(self.s >> w, self.t >> w, H)
