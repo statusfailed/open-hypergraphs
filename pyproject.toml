@@ -25,6 +25,10 @@ dev = [
 "Homepage" = "https://github.com/statusfailed/open-hypergraphs/"
 "Github" = "https://github.com/statusfailed/open-hypergraphs/"
 
+# export type annotations
+[tool.setuptools.package-data]
+"open_hypergraphs" = ["py.typed"]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
