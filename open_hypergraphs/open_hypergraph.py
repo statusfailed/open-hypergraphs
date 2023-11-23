@@ -154,8 +154,14 @@ class OpenHypergraph(HasHypergraph):
         return cls(s, t, H)
 
     @classmethod
-    def tensor_list(cls, ds: List['OpenHypergraph'], wn=None, xn=None) -> 'OpenHypergraph':
-        raise NotImplementedError("TODO")
+    def tensor_list(cls, ds: List['OpenHypergraph'], w=None, x=None) -> 'OpenHypergraph':
+        if len(ds) == 0:
+            return cls.unit(w, x)
+
+        s = cls.FiniteFunction().tensor_list([d.s for d in ds])
+        t = cls.FiniteFunction().tensor_list([d.t for d in ds])
+        H = cls.Hypergraph().coproduct_list([d.H for d in ds])
+        return cls(s, t, H)
 
 class HasOpenHypergraph(HasHypergraph):
     @classmethod

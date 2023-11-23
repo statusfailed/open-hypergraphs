@@ -21,6 +21,13 @@ class OpenHypergraphStrategies:
 
     @classmethod
     @st.composite
+    def many_arrows(draw, cls):
+        labels = draw(Hyp.labels())
+        x, w = labels
+        return x, w, draw(st.lists(cls.arrows(labels=labels), min_size=0, max_size=5))
+
+    @classmethod
+    @st.composite
     def identities(draw, cls):
         H = draw(Hyp.discrete())
         s = t = FinFun.FiniteFunction.identity(len(H.w))

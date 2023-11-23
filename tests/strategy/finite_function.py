@@ -172,6 +172,11 @@ class FiniteFunctionStrategies:
 
     @classmethod
     @st.composite
+    def indexed_coproduct_nonempty_lists(draw, cls):
+        return draw(st.lists(cls.indexed_coproducts(), max_size=5, min_size=1))
+
+    @classmethod
+    @st.composite
     def composable_indexed_coproducts(draw, cls, n=Random, target=Random):
         x = draw(cls.indexed_coproducts(n=n, target=target))
         y = draw(cls.indexed_coproducts(n=len(x.values)))

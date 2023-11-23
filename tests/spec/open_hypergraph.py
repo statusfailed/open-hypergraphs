@@ -1,4 +1,6 @@
 from typing import List
+import operator
+from functools import reduce
 
 import pytest
 from hypothesis import given
@@ -89,6 +91,15 @@ class OpenHypergraphSpec:
         f, g = fg
         assert (f @ g).source == (f.source + g.source)
         assert (f @ g).target == (f.target + g.target)
+
+    @given(OpenHyp.many_arrows())
+    def test_tensor_list(self, xwfs):
+        x, w, fs = xwfs
+        x = x.to_initial()
+        w = w.to_initial()
+        actual = OpenHyp.OpenHypergraph.tensor_list(fs, x, w)
+        expected = reduce(operator.matmul, fs, OpenHypergraph.unit(x, w))
+        assert actual == expected
 
     @given(arrow_pair)
     def test_twist_naturality(self, fg):

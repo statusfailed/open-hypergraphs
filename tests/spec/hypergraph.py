@@ -71,6 +71,14 @@ class HypergraphSpec:
         assert H.w == G[0].w + G[1].w
         assert H.x == G[0].x + G[1].x
 
+    @given(Hyp.objects())
+    def test_hypergraph_coproduct_list(self, Hs: List[Hypergraph]):
+        if len(Hs) == 0:
+            return # not allowed
+        actual = Hypergraph.coproduct_list(Hs)
+        expected = sum(Hs[1:], Hs[0])
+        assert actual == expected
+
     @given(Hyp.discrete_span())
     def test_hypergraph_coequalize_vertices(self, discrete_span):
         l, K, r = discrete_span

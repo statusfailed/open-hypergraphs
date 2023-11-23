@@ -185,6 +185,15 @@ class FiniteFunctionSpec:
         # Also test that a list of functions roundtrips through IndexedCoproduct
         assert list(d) == list(c)
 
+    @given(FinFun.indexed_coproduct_nonempty_lists())
+    def test_indexed_coproduct_tensor_list(self, cs):
+        actual = FinFun.IndexedCoproduct.tensor_list(cs)
+        expected = cs[0]
+        for c in cs[1:]:
+            expected = expected @ c
+
+        assert actual == expected
+
     @given(FinFun.map_with_indexed_coproducts())
     def test_indexed_coproduct_map(self, fsx):
         # Test that we can pre-compose an arrow with the indexing function

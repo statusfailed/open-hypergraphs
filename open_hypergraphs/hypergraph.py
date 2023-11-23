@@ -1,4 +1,4 @@
-from typing import Protocol, Any, Type
+from typing import Self, List, Protocol, Any, Type
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from open_hypergraphs.finite_function import FiniteFunction, IndexedCoproduct, HasIndexedCoproduct
@@ -58,6 +58,21 @@ class Hypergraph(HasIndexedCoproduct):
         assert G.w.target == H.w.target
         assert G.x.target == H.x.target
         return type(G)(G.s @ H.s, G.t @ H.t, G.w + H.w, G.x + H.x)
+
+    @classmethod
+    def coproduct_list(cls, Hs: List['Hypergraph']) -> Self:
+        """ Compute the n-fold coproduct of hypergraphs for n > 0 """
+        if len(Hs) == 0:
+            raise ValueError("Hs must be a nonempty list")
+        # note: s, t are tensored since we need to renumber hypernodes
+        IndexedCoproduct = cls.IndexedCoproduct()
+        FiniteFunction   = IndexedCoproduct.FiniteFunction()
+        return cls(
+            s=IndexedCoproduct.tensor_list([H.s for H in Hs]),
+            t=IndexedCoproduct.tensor_list([H.t for H in Hs]),
+            w=FiniteFunction.coproduct_list([H.w for H in Hs]),
+            x=FiniteFunction.coproduct_list([H.x for H in Hs]))
+
 
     def __add__(G: 'Hypergraph', H: 'Hypergraph') -> 'Hypergraph':
         return G.coproduct(H)

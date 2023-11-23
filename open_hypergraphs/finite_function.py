@@ -339,7 +339,7 @@ class FiniteFunction(ABC):
 
     ################################################################################
     # Sorting morphisms
-    def argsort(f: 'FiniteFunction') -> Self:
+    def argsort(f: Self) -> Self:
         """
         Given a finite function                     ``f : A → B``
         Return the *stable* sorting permutation     ``p : A → A``
@@ -556,6 +556,15 @@ class IndexedCoproduct(HasFiniteFunction):
 
     def __matmul__(x: 'IndexedCoproduct', y: 'IndexedCoproduct') -> 'IndexedCoproduct':
         return x.tensor(y)
+
+    @classmethod
+    def tensor_list(cls, xs: List['IndexedCoproduct']):
+        """ Concatenate a nonempty sequence of IndexedCoproduct """
+        if len(xs) == 0:
+            raise ValueError("xs must be a nonempty list")
+        sources = cls.FiniteFunction().coproduct_list([x.sources for x in xs])
+        values  = cls.FiniteFunction().tensor_list([x.values for x in xs])
+        return cls(sources, values)
 
     def indexed_values(self, x: FiniteFunction) -> FiniteFunction:
         """Like ``map_indexes`` but only computes the ``values`` array of an IndexedCoproduct"""
