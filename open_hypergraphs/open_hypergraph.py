@@ -90,12 +90,12 @@ class OpenHypergraph(HasHypergraph):
         return type(self)(self.t, self.s, self.H)
 
     @classmethod
-    def spider(cls, s: FiniteFunction, t: FiniteFunction, w: FiniteFunction, x: FiniteFunction) -> 'OpenHypergraph':
+    def spider(cls, s: FiniteFunction, t: FiniteFunction, w: FiniteFunction, x: FiniteFunction) -> Self:
         H = cls.Hypergraph().discrete(w, x)
         return cls(s, t, H)
 
     @classmethod
-    def half_spider(cls, s: FiniteFunction, w: FiniteFunction, x: FiniteFunction) -> 'OpenHypergraph':
+    def half_spider(cls, s: FiniteFunction, w: FiniteFunction, x: FiniteFunction) -> Self:
         t = cls.FiniteFunction().identity(len(w))
         return cls.spider(s, t, w, x)
 
