@@ -75,8 +75,8 @@ class HypergraphStrategies:
             [G] = draw(cls.objects(n=1))
 
         # old labels + new labels
-        w = G.w + draw(FinFun.arrows(target=G.w.target))
-        x = G.x + draw(FinFun.arrows(target=G.x.target))
+        w = G.w + draw(FinFun.arrows(target=G.w.target, dtype=st.just(G.w.dtype)))
+        x = G.x + draw(FinFun.arrows(target=G.x.target, dtype=st.just(G.x.dtype)))
         [H] = draw(cls.objects(labels=(w, x)))
 
         # A morphism of hypergraphs is a mapping on vertices and edges, respectively!

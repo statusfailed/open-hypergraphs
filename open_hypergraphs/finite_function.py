@@ -375,19 +375,18 @@ class FiniteFunction(ABC):
     # Sequential-only methods
 
     @classmethod
-    def coproduct_list(cls, fs: List['FiniteFunction'], target=None):
+    def coproduct_list(cls, fs: List['FiniteFunction'], target=None, dtype=None):
         """ Compute the coproduct of a list of finite functions. O(n) in size of the result.
 
         .. warning::
             Does not speed up to O(log n) in the parallel case.
         """
-        # NOTE: this function is not parallelized!
         if len(fs) == 0:
-            return cls.initial(0 if target is None else target)
+            return cls.initial(target, dtype)
 
         # all targets must be equal
         assert all(f.target == g.target for f, g in zip(fs, fs[:1]))
-        return cls(fs[0].target, cls.Array.concatenate([f.table for f in fs], cls.Dtype))
+        return cls(fs[0].target, cls.Array.concatenate([f.table for f in fs], fs[0].dtype))
 
     @classmethod
     def tensor_list(cls, fs: List['FiniteFunction']):

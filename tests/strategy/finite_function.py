@@ -36,7 +36,7 @@ class FiniteFunctionStrategies:
 
     @classmethod
     @st.composite
-    def arrow_type(draw, cls, source=Random, target=Random, finite_target=True):
+    def arrow_type(draw, cls, source=Random, target=Random, finite_target=False):
         """ Generate the type of a random finite function.
         Only one type is forbidden: ``N → 0`` for ``N > 0``.
         """
@@ -68,22 +68,29 @@ class FiniteFunctionStrategies:
 
     @classmethod
     @st.composite
-    def arrows(draw, cls, source=Random, target=Random, finite_target=False):
+    def arrows(draw, cls, source=Random, target=Random, finite_target=False, dtype=None):
+        if dtype is None:
+            dtype = st.sampled_from([cls.FiniteFunction.Dtype, 'O'])
+
         if source is None:
             raise ValueError("Cannot generate an arrow with source = None")
 
-        dtype = cls.FiniteFunction.Dtype
         source, target = draw(cls.arrow_type(
             source=source,
             target=target,
             finite_target=finite_target))
 
         if target == 0:
-            table = cls.Array.zeros(0, dtype=dtype)
+            table = cls.Array.zeros(0, dtype=cls.FiniteFunction.Dtype)
         else:
             # NOTE: set high to MAX_OBJECT if non-finite.
             high = cls.MAX_OBJECT if target is None else target
-            table = draw(cls.arrays(n=source, high=high, dtype=dtype))
+            table = draw(cls.arrays(n=source, high=high, dtype=cls.FiniteFunction.Dtype))
+
+        if target is None and finite_target == False:
+            dtype = draw(dtype)
+            table = cls.Array.array([x for x in table], dtype=dtype)
+
         return cls.FiniteFunction(target, table)
 
     @classmethod
@@ -149,7 +156,7 @@ class FiniteFunctionStrategies:
 
     @classmethod
     @st.composite
-    def indexed_coproducts(draw, cls, n=Random, target=Random):
+    def indexed_coproducts(draw, cls, n=Random, target=Random, finite_target=False):
         if n is Random:
             n = draw(cls.coproduct_indexes())
 
@@ -158,22 +165,23 @@ class FiniteFunctionStrategies:
         #   v : sum(s) → X
         # when X == 0, we must have sum(s) == 0, so s is an array of zeros.
         max_source = Random if target is Random or target > 0 else 1
-        sources = draw(cls.arrows(source=n, target=max_source))
+        sources = draw(cls.arrows(source=n, target=max_source, finite_target=True))
         sources.target = None # NOTE: need sources to be non-finite codomain.
 
         # sum of sources is the source of the values array
         source = cls.FiniteFunction.Array.sum(sources.table)
-        _, target = draw(cls.arrow_type(source=source, target=target))
+        _, target = draw(cls.arrow_type(source=source, target=target, finite_target=finite_target))
         values = draw(cls.arrows(
             source=cls.FiniteFunction.Array.sum(sources.table),
-            target=target))
+            target=target,
+            finite_target=finite_target))
 
         return cls.IndexedCoproduct(sources=sources, values=values)
 
     @classmethod
     @st.composite
-    def indexed_coproduct_nonempty_lists(draw, cls):
-        return draw(st.lists(cls.indexed_coproducts(), max_size=5, min_size=1))
+    def indexed_coproduct_nonempty_lists(draw, cls, finite_target=False):
+        return draw(st.lists(cls.indexed_coproducts(finite_target=finite_target), max_size=5, min_size=1))
 
     @classmethod
     @st.composite

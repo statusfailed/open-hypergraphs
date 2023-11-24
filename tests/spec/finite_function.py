@@ -71,6 +71,14 @@ class FiniteFunctionSpec:
         assert (i0 >> (f + g)) == f
         assert (i1 >> (f + g)) == g
 
+    @given(FinFun.indexed_coproducts())
+    def test_coproduct_list(self, cs: IndexedCoproduct):
+        target = cs.values.target
+        dtype  = cs.values.table.dtype
+        actual = FinFun.FiniteFunction.coproduct_list(list(cs), target, dtype)
+        expected = sum(cs, FinFun.FiniteFunction.initial(target, dtype))
+        assert actual == expected
+
     @given(f=FinFun.arrows(), b=FinFun.objects())
     def test_f_cp_inj0_equals_inject0(self, f, b):
         assert f >> FinFun.FiniteFunction.inj0(f.target, b) == f.inject0(b)
@@ -185,7 +193,7 @@ class FiniteFunctionSpec:
         # Also test that a list of functions roundtrips through IndexedCoproduct
         assert list(d) == list(c)
 
-    @given(FinFun.indexed_coproduct_nonempty_lists())
+    @given(FinFun.indexed_coproduct_nonempty_lists(finite_target=True))
     def test_indexed_coproduct_tensor_list(self, cs):
         actual = FinFun.IndexedCoproduct.tensor_list(cs)
         expected = cs[0]
