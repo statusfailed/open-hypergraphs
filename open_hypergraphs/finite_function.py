@@ -104,6 +104,10 @@ class FiniteFunction(ABC):
             raise ValueError(f"Calling {self} with {i} >= source {self.source}")
         return self.table[i]
 
+    def __iter__(self):
+        """ Iterate the elements of this FiniteFunction """
+        return iter(self.table)
+
     @property
     def type(f):
         """Get the source and target of this finite function.

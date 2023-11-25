@@ -12,9 +12,9 @@ class OpenHypergraph(HasHypergraph):
 
     def __post_init__(self):
         if self.s.target != self.H.w.source:
-            raise ValueError(f"s.target must equal H.w.source, but {s.target} != {H.w.source}")
+            raise ValueError(f"self.s.target must equal H.w.source, but {self.s.target} != {self.H.w.source}")
         if self.t.target != self.H.w.source:
-            raise ValueError(f"t.target must equal H.w.source, but {t.target} != {H.w.source}")
+            raise ValueError(f"self.t.target must equal H.w.source, but {self.t.target} != {self.H.w.source}")
 
     @property
     def source(self):

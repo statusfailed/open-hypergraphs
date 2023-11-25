@@ -79,6 +79,12 @@ class FiniteFunctionSpec:
         expected = sum(cs, FinFun.FiniteFunction.initial(target, dtype))
         assert actual == expected
 
+    @given(FinFun.arrows())
+    def test_iter_roundtrip(self, f: FiniteFunction):
+        array = FinFun.Array.array(list(f), dtype=f.dtype)
+        g = FinFun.FiniteFunction(f.target, array)
+        assert f == g
+
     @given(f=FinFun.arrows(), b=FinFun.objects())
     def test_f_cp_inj0_equals_inject0(self, f, b):
         assert f >> FinFun.FiniteFunction.inj0(f.target, b) == f.inject0(b)
