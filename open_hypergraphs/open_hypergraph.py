@@ -122,6 +122,18 @@ class OpenHypergraph(HasHypergraph):
 
     def permute(self, w: FiniteFunction, x: FiniteFunction) -> Self:
         """ Lift a permutation of Hypergraphs into a permutation of OpenHypergraphs """
+        # We have a morphism of cospans
+        #
+        #    s G t
+        #     ↗ ↖
+        #   A  ↓  B
+        #    ↘ H ↙
+        #    s'  t'
+        #
+        # with the ↓ arrow given by permutations w, x.
+        #
+        # So s' = s ; w
+        #    t' = t ; w
         H = self.H.permute(w, x)
         return type(self)(self.s >> w, self.t >> w, H)
 

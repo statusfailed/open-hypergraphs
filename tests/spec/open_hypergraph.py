@@ -191,3 +191,11 @@ class OpenHypergraphSpec:
         f, w, x = fwx
         g = f.permute(w, x)
         _assert_equality_invariants(f, g)
+        # also check that each g.H.x has the *same* source and target types as permuted f.H.x!
+        f_s = list(f.H.s)
+        f_t = list(f.H.t)
+        g_s = list(g.H.s)
+        g_t = list(g.H.t)
+        for i in range(len(x)):
+            assert g_s[x(i)] == (f_s[i] >> w)
+            assert g_t[x(i)] == (f_t[i] >> w)

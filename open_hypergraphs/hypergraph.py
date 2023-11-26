@@ -90,12 +90,25 @@ class Hypergraph(HasIndexedCoproduct):
             raise ValueError(f"w must be a permutation of type {self.W} → {self.W}")
         if x.source != self.X or x.target != self.X:
             raise ValueError(f"x must be a permutation of type {self.X} → {self.X}")
-
+        # (w, x) is an ACSet/hypergraph morphism G ⇒ H
+        # So we must have that both w and x preserve labels.
+        # i.e.,
+        #   G.w == w >> H.w
+        # whence:
+        #   H.w == w⁻¹ ; G.w
+        # similarly
+        #   H.x == x⁻¹ ; G.x
+        #
+        # source/target maps
+        #   Σ_{i ∈ X} f(i)
+        # become
+        #   Σ_{i ∈ X} g(x(i)) = Σ_{i ∈ X} f(i)
+        x = x.argsort()
         return type(self)(
             s = self.s.map_indexes(x).map_values(w),
             t = self.t.map_indexes(x).map_values(w),
             w = w.argsort() >> self.w,
-            x = x.argsort() >> self.x)
+            x = x >> self.x)
 
 class HasHypergraph(HasIndexedCoproduct):
     @classmethod
