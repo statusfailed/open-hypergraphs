@@ -520,14 +520,14 @@ class IndexedCoproduct(HasFiniteFunction):
         return len(self.sources)
 
     @classmethod
-    def from_list(cls, target, fs: List['FiniteFunction']) -> 'IndexedCoproduct':
+    def from_list(cls, target, fs: List['FiniteFunction'], dtype=None) -> 'IndexedCoproduct':
         """ Create an `IndexedCoproduct` from a list of :py:class:`FiniteFunction` """
         assert all(target == f.target for f in fs)
-        dtype = cls.FiniteFunction().Dtype
-        sources_table = cls.FiniteFunction().Array.array([len(f) for f in fs], dtype=dtype)
+        Dtype = cls.FiniteFunction().Dtype
+        sources_table = cls.FiniteFunction().Array.array([len(f) for f in fs], dtype=Dtype)
         return cls(
             sources=cls.FiniteFunction()(None, sources_table),
-            values=cls.FiniteFunction().coproduct_list(fs, target=target))
+            values=cls.FiniteFunction().coproduct_list(fs, target=target, dtype=dtype))
 
     def __iter__(self):
         """ Yield an iterator of the constituent finite functions
