@@ -76,15 +76,7 @@ class Optic(FrobeniusFunctor, ABC):
         c = lhs >> rhs
 
         # now adapt so that the wires labeled RB and RA are 'bent around'.
-        s_i = self.FiniteFunction().inj0(len(FA.values), len(RB.values)) >> c.s
-        s_o = self.FiniteFunction().inj1(len(FB.values), len(RA.values)) >> c.t
-        s = s_i + s_o
-
-        t_i = self.FiniteFunction().inj0(len(FB.values), len(RA.values)) >> c.t
-        t_o = self.FiniteFunction().inj1(len(FA.values), len(RB.values)) >> c.s
-        t = t_i + t_o
-
-        d = self.OpenHypergraph()(s, t, c.H)
+        d = partial_dagger(c, FA, FB, RA, RB)
 
         # finally interleave the FA with RA and FB with RB
         lhs = self.interleave_blocks(FA, RA, x.to_initial()).dagger()
@@ -104,3 +96,22 @@ class Optic(FrobeniusFunctor, ABC):
         # NOTE: t is the dagger of transpose(N, 2) because it appears in the target position!
         t = AB.sources.injections(self.FiniteFunction().transpose(2, len(A)))
         return self.OpenHypergraph().spider(s, t, AB.values, x)
+
+# Bend around the A₁ and B₁ wires of a map like c:
+#         ┌─────┐
+# FA  ────┤     ├──── FB
+#         │  c  │
+# RB  ────┤     ├──── RA
+#         └─────┘
+#
+# ... to get a map of type FA ● RA → FB ● RB
+def partial_dagger(c: OpenHypergraph, FA: FiniteFunction, FB: FiniteFunction, RA: FiniteFunction, RB: FiniteFunction) -> FiniteFunction:
+    s_i = c.FiniteFunction().inj0(len(FA.values), len(RB.values)) >> c.s
+    s_o = c.FiniteFunction().inj1(len(FB.values), len(RA.values)) >> c.t
+    s = s_i + s_o
+
+    t_i = c.FiniteFunction().inj0(len(FB.values), len(RA.values)) >> c.t
+    t_o = c.FiniteFunction().inj1(len(FA.values), len(RB.values)) >> c.s
+    t = t_i + t_o
+
+    return type(c)(s, t, c.H)
