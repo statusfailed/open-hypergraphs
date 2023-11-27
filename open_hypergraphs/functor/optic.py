@@ -89,13 +89,39 @@ class Optic(FrobeniusFunctor, ABC):
         ``(A₀ + B₀) + (A₁ + B₁) + ... (An + Bn)`` """
         if len(A) != len(B):
             raise ValueError("Can't interleave types of unequal lengths")
+        if len(x) != 0:
+            raise ValueError(f"x must be initial, but {x.source=}")
 
         AB = A + B
 
         s = self.FiniteFunction().identity(len(AB.values))
-        # NOTE: t is the dagger of transpose(N, 2) because it appears in the target position!
+        # NOTE: t is the dagger of transpose(2, N) because it appears in the target position!
         t = AB.sources.injections(self.FiniteFunction().transpose(2, len(A)))
         return self.OpenHypergraph().spider(s, t, AB.values, x)
+
+
+    def adapt(self, c: OpenHypergraph, A: FiniteFunction, B: FiniteFunction):
+        """ Given some optic ``c = Optic(c')`` where ``c' : A → B``,
+        adapt ``c`` to have the type ``F(A) ● R(B) → F(B) ● R(A)``. """
+        # we'll need these
+        x = c.H.x.to_initial()
+        FA = self.F.map_objects(A)
+        FB = self.F.map_objects(B)
+        RA = self.R.map_objects(A)
+        RB = self.R.map_objects(B)
+
+        # first, uninterleave to get d : FA●RA → FB●RB
+        lhs = self.interleave_blocks(FA, RA, x)
+        rhs = self.interleave_blocks(FB, RB, x).dagger()
+        d = lhs >> c >> rhs
+
+        # d is the uninterleaving of source/targets
+        assert d.source == (FA + RA).values
+        assert d.target == (FB + RB).values
+
+        # now compute the partial daggering to obtain
+        # d : FA●RB → FB●RA
+        return partial_dagger(d, FA, FB, RB, RA)
 
 # Bend around the A₁ and B₁ wires of a map like c:
 #         ┌─────┐
