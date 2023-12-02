@@ -52,8 +52,8 @@ class Optic(FrobeniusFunctor, ABC):
         # NOTE: we use flatmap here to ensure that each "block" of FB, which
         # might be e.g., F(B₀ ● B₁ ● ... ● Bn) is correctly interleaved:
         # consider that if M = I, then we would need to interleave
-        fwd_interleave = self.interleave_blocks(B.flatmap(FB), M, x.to_initial())
-        rev_cointerleave = self.interleave_blocks(M, B.flatmap(RB), x.to_initial()).dagger()
+        fwd_interleave = self.interleave_blocks(B.flatmap(FB), M, x.to_initial()).dagger()
+        rev_cointerleave = self.interleave_blocks(M, B.flatmap(RB), x.to_initial())
 
         assert fwd.target == fwd_interleave.source
         assert rev_cointerleave.target == rev.source
