@@ -131,7 +131,7 @@ class Optic(FrobeniusFunctor, ABC):
 #         └─────┘
 #
 # ... to get a map of type FA ● RA → FB ● RB
-def partial_dagger(c: OpenHypergraph, FA: FiniteFunction, FB: FiniteFunction, RA: FiniteFunction, RB: FiniteFunction) -> FiniteFunction:
+def partial_dagger(c: OpenHypergraph, FA: IndexedCoproduct, FB: IndexedCoproduct, RA: IndexedCoproduct, RB: IndexedCoproduct) -> OpenHypergraph:
     s_i = c.FiniteFunction().inj0(len(FA.values), len(RB.values)) >> c.s
     s_o = c.FiniteFunction().inj1(len(FB.values), len(RA.values)) >> c.t
     s = s_i + s_o
