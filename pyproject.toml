@@ -12,8 +12,8 @@ classifiers = [
   "License :: OSI Approved :: MIT License",
 ]
 dependencies = [
-  "numpy~=1.23.3",
-  "scipy~=1.10.0",
+  "numpy~=1.26.4",
+  "scipy~=1.15.1",
 ]
 [project.optional-dependencies]
 dev = [
