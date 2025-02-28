@@ -1,6 +1,6 @@
 [project]
 name = "open-hypergraphs"
-version = "0.1.2"
+version = "0.1.3"
 authors = [
   { name="Paul Wilson", email="paul@statusfailed.com" }
 ]
